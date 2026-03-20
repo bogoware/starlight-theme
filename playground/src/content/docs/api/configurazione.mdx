@@ -1,0 +1,356 @@
+---
+title: 'Configurazione'
+description: "Riferimento completo al file .ricetta e alle opzioni del tema Bogoware: accentColor, analytics, OgImage e tutti i parametri disponibili."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+import BogowareLogo from '@bogoware/starlight-theme/components/BogowareLogo.astro';
+
+> *"Ogni cosa a suo posto, e un posto per ogni cosa."* — La cucina ordinata produce i piatti migliori. La configurazione ordinata produce i cluster migliori.
+
+Pasta Protocol si configura tramite il file **`.ricetta`** nella root del workspace. È il libro delle ricette del vostro cluster: ogni parametro è un ingrediente, e la combinazione giusta produce un sistema che funziona esattamente come volete.
+
+Il file `.ricetta` è supportato in tre formati equivalenti: YAML, TOML e JSON. Scegliete il formato che preferisce la vostra cucina.
+
+## Il file `.ricetta`
+
+<Tabs>
+  <TabItem label="YAML">
+
+```yaml
+# .ricetta
+cluster:
+  nome: "mia-cucina-distribuita"
+  regione: eu-south-1
+  nodi:
+    min: 3
+    max: 12
+    timeout: 5000
+
+consenso:
+  protocollo: pesto
+  timeout: 2000
+  rounds: 3
+  quorumFraction: 0.67
+  retryOnVesuvio: true
+  retryDelay: 500
+
+garlicbreadcast:
+  paniera:
+    maxSize: 1000
+    ttl: 60000
+  scarpetta:
+    enabled: true
+    lookback: 5000
+
+logging:
+  livello: PEPERONCINO   # BRUSCHETTA | PEPERONCINO | VESUVIO | TERREMOTO
+  formato: json          # json | testo
+  destinazione: stdout   # stdout | file | syslog
+
+storage:
+  driver: postgres
+  connectionString: ${DATABASE_URL}
+  pool:
+    min: 2
+    max: 20
+
+tema:
+  accentColor: "#6366f1"
+  logoVariant: simplified  # full | simplified | monochrome
+  mode: architect          # architect | chef | sommelier
+  fieldLines: true
+
+analytics:
+  googleAnalyticsId: G-XXXXXXXXXX
+  respectDnt: true
+  cookieless: false
+```
+
+  </TabItem>
+
+  <TabItem label="TOML">
+
+```toml
+# .ricetta
+
+[cluster]
+nome = "mia-cucina-distribuita"
+regione = "eu-south-1"
+
+[cluster.nodi]
+min = 3
+max = 12
+timeout = 5000
+
+[consenso]
+protocollo = "pesto"
+timeout = 2000
+rounds = 3
+quorumFraction = 0.67
+retryOnVesuvio = true
+retryDelay = 500
+
+[garlicbreadcast.paniera]
+maxSize = 1000
+ttl = 60000
+
+[garlicbreadcast.scarpetta]
+enabled = true
+lookback = 5000
+
+[logging]
+livello = "PEPERONCINO"
+formato = "json"
+destinazione = "stdout"
+
+[storage]
+driver = "postgres"
+connectionString = "${DATABASE_URL}"
+
+[storage.pool]
+min = 2
+max = 20
+
+[tema]
+accentColor = "#6366f1"
+logoVariant = "simplified"
+mode = "architect"
+fieldLines = true
+
+[analytics]
+googleAnalyticsId = "G-XXXXXXXXXX"
+respectDnt = true
+cookieless = false
+```
+
+  </TabItem>
+
+  <TabItem label="JSON">
+
+```json
+{
+  "cluster": {
+    "nome": "mia-cucina-distribuita",
+    "regione": "eu-south-1",
+    "nodi": { "min": 3, "max": 12, "timeout": 5000 }
+  },
+  "consenso": {
+    "protocollo": "pesto",
+    "timeout": 2000,
+    "rounds": 3,
+    "quorumFraction": 0.67,
+    "retryOnVesuvio": true,
+    "retryDelay": 500
+  },
+  "garlicbreadcast": {
+    "paniera": { "maxSize": 1000, "ttl": 60000 },
+    "scarpetta": { "enabled": true, "lookback": 5000 }
+  },
+  "logging": {
+    "livello": "PEPERONCINO",
+    "formato": "json",
+    "destinazione": "stdout"
+  },
+  "storage": {
+    "driver": "postgres",
+    "connectionString": "${DATABASE_URL}",
+    "pool": { "min": 2, "max": 20 }
+  },
+  "tema": {
+    "accentColor": "#6366f1",
+    "logoVariant": "simplified",
+    "mode": "architect",
+    "fieldLines": true
+  },
+  "analytics": {
+    "googleAnalyticsId": "G-XXXXXXXXXX",
+    "respectDnt": true,
+    "cookieless": false
+  }
+}
+```
+
+  </TabItem>
+</Tabs>
+
+---
+
+## Opzioni del tema Bogoware
+
+Il tema Bogoware per Starlight si configura tramite la sezione `tema` del file `.ricetta` oppure direttamente in `astro.config.mjs`.
+
+### `accentColor`
+
+Il colore primario dell'interfaccia. Accetta qualsiasi valore CSS valido: esadecimale, `rgb()`, `hsl()`, variabile CSS.
+
+```typescript
+bogowareTheme({
+  accentColor: '#6366f1',   // indigo — il colore di default
+  // accentColor: 'hsl(239, 84%, 67%)',
+  // accentColor: 'var(--brand-primary)',
+})
+```
+
+Il colore viene applicato a: link attivi, badge, bordi di highlight, progress bar e tutti gli elementi interattivi.
+
+### `mode`
+
+Controlla il layout e le feature attivate per il sito di documentazione.
+
+| Valore | Descrizione |
+|--------|-------------|
+| `architect` | Layout tecnico, sidebar densa, campo visivo massimizzato |
+| `chef` | Layout editoriale, spaziatura maggiore, immagini prominenti |
+| `sommelier` | Layout minimalista, tipografia allargata, adatto a riferimenti |
+
+### `logoVariant`
+
+Il logo Bogoware è disponibile in tre varianti:
+
+<div style="display: flex; gap: 2rem; align-items: center; padding: 1.5rem 0;">
+  <div style="text-align: center;">
+    <BogowareLogo variant="full" size={64} />
+    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--sl-color-gray-3);">`full`</p>
+  </div>
+  <div style="text-align: center;">
+    <BogowareLogo variant="simplified" size={64} />
+    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--sl-color-gray-3);">`simplified`</p>
+  </div>
+  <div style="text-align: center;">
+    <BogowareLogo variant="monochrome" size={64} />
+    <p style="margin-top: 0.5rem; font-size: 0.875rem; color: var(--sl-color-gray-3);">`monochrome`</p>
+  </div>
+</div>
+
+```typescript
+bogowareTheme({
+  logoVariant: 'simplified', // 'full' | 'simplified' | 'monochrome'
+})
+```
+
+- **`full`**: Con sfondo scuro sfumato, field lines decorative e punto centrale. Ideale per siti con sfondo chiaro.
+- **`simplified`**: Versione ridotta senza field lines, mantenendo i due archi cromatici. Raccomandata per la navbar.
+- **`monochrome`**: Versione monocromatica a tratto singolo. Ideale per stampa, favicon, o contesti dove il colore è limitato.
+
+### `fieldLines`
+
+Attiva le linee di campo decorative nell'hero e nelle sezioni evidenziate. Default: `true`.
+
+```typescript
+bogowareTheme({
+  fieldLines: true,
+})
+```
+
+---
+
+## Analytics
+
+Pasta Protocol supporta Google Analytics 4 con rispetto del Do-Not-Track e modalità cookieless.
+
+### `googleAnalyticsId`
+
+L'ID di tracciamento GA4 nel formato `G-XXXXXXXXXX`. Se omesso, il tracciamento non viene attivato.
+
+```typescript
+bogowareTheme({
+  seo: {
+    // ...
+  },
+  analytics: {
+    googleAnalyticsId: 'G-XXXXXXXXXX',
+  },
+})
+```
+
+### `respectDnt`
+
+Se `true` (default), il tracciamento è disabilitato automaticamente per gli utenti che hanno impostato l'header `DNT: 1` nel browser.
+
+```typescript
+analytics: {
+  googleAnalyticsId: 'G-XXXXXXXXXX',
+  respectDnt: true, // default: true
+}
+```
+
+### `cookieless`
+
+Se `true`, GA4 viene configurato in modalità cookieless (`storage: 'none'`). Utile per siti che necessitano di conformità GDPR senza banner cookie. Default: `false`.
+
+```typescript
+analytics: {
+  googleAnalyticsId: 'G-XXXXXXXXXX',
+  respectDnt: true,
+  cookieless: false, // true per modalità senza cookie
+}
+```
+
+---
+
+## OgImage
+
+Il componente `OgImage` genera automaticamente immagini Open Graph per ogni pagina della documentazione. È integrato nel tema e si attiva configurando la sezione `seo` in `astro.config.mjs`.
+
+```typescript
+bogowareTheme({
+  seo: {
+    siteName: 'Pasta Protocol',
+    defaultDescription: 'Al dente consistency for your distributed systems',
+    structuredData: {
+      type: 'SoftwareSourceCode',
+      author: 'Bogoware',
+    },
+  },
+})
+```
+
+Le immagini OG vengono generate staticamente al build time per ogni pagina. Il titolo, la descrizione e il nome del sito vengono estratti automaticamente dal frontmatter della pagina. Per personalizzare l'immagine di una pagina specifica, usate il campo `ogImage` nel frontmatter:
+
+```markdown
+---
+title: 'La mia pagina'
+description: 'Descrizione personalizzata'
+ogImage: '/immagini/og-custom.png'
+---
+```
+
+---
+
+## Variabili d'ambiente
+
+I valori sensibili nel file `.ricetta` possono essere referenziati come variabili d'ambiente con la sintassi `${NOME_VARIABILE}`:
+
+```yaml
+storage:
+  connectionString: ${DATABASE_URL}
+
+analytics:
+  googleAnalyticsId: ${GA_MEASUREMENT_ID}
+```
+
+Le variabili vengono risolte al momento dell'avvio del cluster. Se una variabile richiesta non è definita, il sistema emette un errore `VESUVIO` prima di avviarsi.
+
+---
+
+## Riferimento completo parametri
+
+| Parametro | Tipo | Default | Descrizione |
+|-----------|------|---------|-------------|
+| `cluster.nome` | `string` | — | Nome identificativo del cluster |
+| `cluster.regione` | `string` | `eu-west-1` | Regione cloud di default |
+| `cluster.nodi.min` | `number` | `1` | Numero minimo di nodi |
+| `cluster.nodi.max` | `number` | `10` | Numero massimo di nodi |
+| `cluster.nodi.timeout` | `number` | `5000` | Timeout connessione nodo (ms) |
+| `consenso.protocollo` | `pesto\|genovese\|ragu` | `pesto` | Protocollo di default |
+| `consenso.timeout` | `number` | `2000` | Timeout per round (ms) |
+| `garlicbreadcast.paniera.maxSize` | `number` | `1000` | Max messaggi in buffer |
+| `logging.livello` | `BRUSCHETTA\|PEPERONCINO\|VESUVIO\|TERREMOTO` | `PEPERONCINO` | Livello di log minimo |
+| `tema.accentColor` | `string` | `#6366f1` | Colore primario UI |
+| `tema.logoVariant` | `full\|simplified\|monochrome` | `simplified` | Variante logo |
+| `tema.mode` | `architect\|chef\|sommelier` | `architect` | Modalità layout |
+| `tema.fieldLines` | `boolean` | `true` | Linee di campo decorative |
+| `analytics.googleAnalyticsId` | `string` | — | ID GA4 |
+| `analytics.respectDnt` | `boolean` | `true` | Rispetta Do-Not-Track |
+| `analytics.cookieless` | `boolean` | `false` | Modalità senza cookie |

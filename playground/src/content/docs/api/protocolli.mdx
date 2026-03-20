@@ -1,0 +1,352 @@
+---
+title: 'Protocolli di Consenso'
+description: "Pesto, Genovese e Ragu: i tre protocolli di consenso di Pasta Protocol con esempi di codice completi."
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+> *"L'accordo fa la forza, il disaccordo fa la storia."* — Nel cluster di Pasta Protocol, preferiamo la forza.
+
+Il consenso distribuito è il problema più antico e più difficile dei sistemi distribuiti. Pasta Protocol lo risolve con tre protocolli distinti, ognuno con le sue garanzie, i suoi compromessi e il suo carattere culinario. La scelta del protocollo giusto è come scegliere il sugo giusto: dipende dal piatto, dall'occasione e da quanto tempo avete a disposizione.
+
+Tutti e tre i protocolli espongono la stessa interfaccia base `ConsensusProtocol`, ma con comportamenti radicalmente diversi sotto carico, in presenza di partizioni di rete e in caso di nodi lenti o assenti.
+
+## Interfaccia Base
+
+```typescript
+export interface ConsensusProtocol {
+  readonly name: string;
+  readonly minQuorum: number; // frazione minima di nodi richiesti
+
+  propose<T>(value: T, options?: ProposeOptions): Promise<ConsensusResult<T>>;
+  observe<T>(topic: string, handler: (result: ConsensusResult<T>) => void): Unsubscribe;
+  status(): Promise<ProtocolStatus>;
+}
+
+export interface ConsensusResult<T> {
+  readonly accepted: boolean;
+  readonly value: T | undefined;
+  readonly round: number;
+  readonly participants: string[];
+  readonly duration: number; // ms
+}
+```
+
+---
+
+<Tabs>
+  <TabItem label="Pesto">
+
+## Protocollo Pesto
+
+**Velocità ligure. Accordo a 2/3.** Ispirato al pesto genovese: rapido da preparare, intenso nel sapore, non richiede cottura. Il Protocollo Pesto è il protocollo di default di Pasta Protocol per operazioni che necessitano di bassa latenza e possono tollerare un margine di nodi assenti.
+
+### Caratteristiche
+
+| Proprietà | Valore |
+|-----------|--------|
+| Quorum minimo | 2/3 dei nodi attivi |
+| Latency tipica | 15–40 ms |
+| Fault tolerance | Tollera fino a 1/3 nodi guasti |
+| Consistenza | Linearizable |
+| Throughput | ~8.000 op/s per nodo |
+
+### Quando usarlo
+
+- Aggiornamenti di configurazione del cluster
+- Leader election e rotazione
+- Operazioni di write che richiedono bassa latenza
+- Qualsiasi operazione dove la velocità è più critica della certezza assoluta
+
+### Limitazioni
+
+Il Pesto **non funziona** se più di 1/3 dei nodi non risponde entro il timeout configurato. In quel caso il sistema lancia un errore `VESUVIO` e la proposta viene annullata. Questo è il comportamento corretto: meglio nessun accordo che un accordo sbagliato.
+
+### API
+
+```typescript
+import { Pasta } from 'pasta-protocol';
+
+const pesto = Pasta.consensus.pesto({
+  timeout: 2000,        // ms per round
+  rounds: 3,            // max round prima di VESUVIO
+  quorumFraction: 0.67, // 2/3 default
+});
+
+// Proposta base
+const risultato = await pesto.propose('nuovo-leader', {
+  topic: 'cluster.leader',
+  ttl: 30_000,
+});
+
+if (risultato.accepted) {
+  console.log(`Accordo raggiunto in ${risultato.duration}ms`);
+  console.log(`Partecipanti: ${risultato.participants.join(', ')}`);
+} else {
+  // Gestione errore: i nodi non hanno raggiunto il quorum
+  console.error('PEPERONCINO: quorum non raggiunto');
+}
+
+// Osservazione continua
+const unsubscribe = pesto.observe<string>('cluster.leader', (result) => {
+  if (result.accepted) {
+    console.log(`Nuovo leader eletto: ${result.value}`);
+  }
+});
+
+// Stato del protocollo
+const stato = await pesto.status();
+console.log(`Nodi attivi: ${stato.activeNodes}/${stato.totalNodes}`);
+```
+
+### Configurazione in `.ricetta`
+
+```yaml
+consenso:
+  protocollo: pesto
+  timeout: 2000
+  rounds: 3
+  quorumFraction: 0.67
+  retryOnVesuvio: true
+  retryDelay: 500
+```
+
+  </TabItem>
+
+  <TabItem label="Genovese">
+
+## Protocollo Genovese
+
+**Lento, ricco, irresistibile. Accordo totale.** Come la cipolla genovese che cuoce per ore fino a diventare oro: il Protocollo Genovese non ha fretta. Richiede il consenso di tutti i nodi disponibili, e non accetta compromessi. Il risultato è una consistenza che dura e non tradisce.
+
+### Caratteristiche
+
+| Proprietà | Valore |
+|-----------|--------|
+| Quorum minimo | 100% dei nodi dichiarati |
+| Latency tipica | 200–800 ms |
+| Fault tolerance | Zero: tutti i nodi devono rispondere |
+| Consistenza | Strict serializable |
+| Throughput | ~400 op/s per nodo |
+
+### Quando usarlo
+
+- Modifiche allo schema del cluster
+- Operazioni finanziarie o contabili critiche
+- Aggiornamenti di sicurezza (rotazione certificati, revoca credenziali)
+- Qualsiasi operazione dove il costo di un errore supera di gran lunga il costo dell'attesa
+
+### Limitazioni
+
+Se anche un solo nodo non risponde, la proposta viene sospesa (non rifiutata). Il sistema attende fino al timeout globale configurato in `consenso.genovese.waitForLateNodi`. Solo alla scadenza del timeout viene emesso un `VESUVIO`. Questo comportamento è intenzionale: un nodo silenzioso non è necessariamente un nodo guasto.
+
+### API
+
+```typescript
+import { Pasta } from 'pasta-protocol';
+
+const genovese = Pasta.consensus.genovese({
+  timeout: 10_000,       // ms per round (generosi — la cipolla ha bisogno di tempo)
+  waitForLateNodi: 5_000, // attesa per nodi lenti prima di VESUVIO
+  onProgress: (status) => {
+    console.log(`In attesa di: ${status.pendingNodes.join(', ')}`);
+  },
+});
+
+// Proposta critica: modifica schema
+interface SchemaUpdate {
+  version: string;
+  changes: string[];
+  rollbackPlan: string;
+}
+
+const aggiornamento: SchemaUpdate = {
+  version: '2.1.0',
+  changes: ['aggiunto campo `regione` a NodoDescriptor'],
+  rollbackPlan: 'rimuovere campo, redeployare nodi < v2.1.0',
+};
+
+const risultato = await genovese.propose(aggiornamento, {
+  topic: 'schema.update',
+  requireAllNodes: true,
+});
+
+if (risultato.accepted) {
+  console.log(`Schema aggiornato. Tutti i ${risultato.participants.length} nodi concordano.`);
+} else {
+  // Rollback immediato
+  await cluster.rollback(aggiornamento.rollbackPlan);
+}
+
+// Verifica che tutti i nodi siano online prima di proporre
+const stato = await genovese.status();
+if (stato.offlineNodes.length > 0) {
+  throw new Error(`PEPERONCINO: nodi offline rilevati: ${stato.offlineNodes.join(', ')}`);
+}
+```
+
+### Configurazione in `.ricetta`
+
+```yaml
+consenso:
+  protocollo: genovese
+  timeout: 10000
+  waitForLateNodi: 5000
+  onLateNodoAction: suspend # suspend | abort
+  minNodi: 3 # non iniziare il consenso con meno di N nodi
+```
+
+  </TabItem>
+
+  <TabItem label="Ragu">
+
+## Protocollo Ragu
+
+**Sei ore minimo. Eventual consistency. Nonna approva.** Il Protocollo Ragu è un'implementazione del pattern Saga per operazioni distribuite a lungo termine. Non è un protocollo di consenso classico: è un coordinatore di transazioni compensabili. Come il ragù della domenica napoletana, non si affretta, non si interrompe, e alla fine il risultato vale ogni minuto di attesa.
+
+### Caratteristiche
+
+| Proprietà | Valore |
+|-----------|--------|
+| Tipo | Saga orchestration |
+| Consistenza | Eventual |
+| Durabilità | Garantita (persistent saga log) |
+| Fault tolerance | Totale: ogni step è compensabile |
+| Throughput | Illimitato (asincrono) |
+| Latency | Da secondi a ore (by design) |
+
+### Quando usarlo
+
+- Onboarding di nuovi nodi nel cluster (processo multi-step)
+- Migrazione dati tra regioni
+- Operazioni che coinvolgono sistemi esterni (pagamenti, notifiche, API di terze parti)
+- Qualsiasi workflow che dura più di qualche secondo e deve essere recuperabile
+
+### Struttura di una Saga Ragu
+
+Una saga è composta da **passi** (`Ingrediente`) e per ogni passo viene definita una **compensazione** (`Sgocciolatura`) eseguita in caso di fallimento.
+
+### API
+
+```typescript
+import { Pasta } from 'pasta-protocol';
+
+const ragu = Pasta.consensus.ragu();
+
+// Definizione della saga: onboarding nodo
+const sagaOnboarding = ragu.saga('onboarding-nodo')
+  .step('registrazione', {
+    execute: async (ctx) => {
+      const nodo = await registry.register(ctx.nodeId);
+      return { ...ctx, nodo };
+    },
+    compensate: async (ctx) => {
+      await registry.deregister(ctx.nodeId);
+    },
+  })
+  .step('configurazione-rete', {
+    execute: async (ctx) => {
+      const config = await network.configure(ctx.nodo);
+      return { ...ctx, networkConfig: config };
+    },
+    compensate: async (ctx) => {
+      await network.teardown(ctx.nodo);
+    },
+  })
+  .step('sincronizzazione-stato', {
+    execute: async (ctx) => {
+      await state.syncFrom(ctx.nodo, 'napoli-primary-01');
+      return { ...ctx, synced: true };
+    },
+    compensate: async (ctx) => {
+      await state.wipe(ctx.nodo);
+    },
+  })
+  .step('annuncio-cluster', {
+    execute: async (ctx) => {
+      await cluster.announce(ctx.nodo);
+      return { ...ctx, announced: true };
+    },
+    compensate: async (ctx) => {
+      await cluster.retract(ctx.nodo);
+    },
+  });
+
+// Esecuzione
+const esecuzione = await ragu.run(sagaOnboarding, {
+  nodeId: 'palermo-05',
+  region: 'eu-south-1',
+});
+
+// Il risultato è un handle asincrono
+esecuzione.on('step:completed', (step) => {
+  console.log(`Passo completato: ${step.name}`);
+});
+
+esecuzione.on('step:failed', (step, error) => {
+  console.error(`PEPERONCINO: passo fallito: ${step.name}`, error);
+  console.log('Avvio compensazioni...');
+});
+
+esecuzione.on('saga:completed', (result) => {
+  console.log(`Nodo ${result.ctx.nodeId} onboardato con successo`);
+});
+
+esecuzione.on('saga:compensated', (result) => {
+  console.warn(`BRUSCHETTA: saga compensata. Stato ripristinato.`);
+});
+
+// Attesa sincrona (con timeout)
+const risultato = await esecuzione.waitFor({ timeout: 300_000 });
+```
+
+### Persistenza e Recovery
+
+La saga viene registrata nel **Libro delle Saghe** (persistent log). In caso di crash del coordinator, il sistema rileva la saga incompleta al restart e la riprende dall'ultimo passo completato.
+
+```typescript
+// Recupero saga dopo crash
+const sagheInCorso = await ragu.listPending();
+for (const saga of sagheInCorso) {
+  await ragu.resume(saga.id);
+}
+```
+
+### Configurazione in `.ricetta`
+
+```yaml
+consenso:
+  protocollo: ragu
+  sagaLog:
+    driver: postgres # postgres | redis | filesystem
+    connectionString: ${DATABASE_URL}
+  retryPolicy:
+    maxAttempts: 5
+    backoff: exponential
+    baseDelay: 1000
+  compensationTimeout: 60000
+```
+
+  </TabItem>
+</Tabs>
+
+---
+
+## Selezione del Protocollo
+
+La scelta del protocollo giusto dipende dal vostro scenario. Come regola generale:
+
+- **Pesto** per operazioni frequenti dove la velocità è prioritaria
+- **Genovese** per operazioni rare ma critiche dove non si può sbagliare
+- **Ragu** per workflow complessi, multi-step, che devono sopravvivere ai guasti
+
+È possibile usare protocolli diversi per operazioni diverse nello stesso cluster. La configurazione in `.ricetta` supporta un protocollo di default e override per topic specifici.
+
+```yaml
+consenso:
+  default: pesto
+  override:
+    'schema.*':   genovese
+    'onboarding.*': ragu
+    'leader.*':   pesto
+```

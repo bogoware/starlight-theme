@@ -1,0 +1,62 @@
+---
+title: 'Panoramica API'
+description: "Guida completa alle API di Pasta Protocol — tipi, protocolli, messaggistica e configurazione."
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+> *"Chi va piano va sano e va lontano."* — Chi usa Pasta Protocol va ancora più lontano, e senza downtime.
+
+Benvenuto nel **Menu Tecnico** di Pasta Protocol. Questa sezione documenta l'intera superficie pubblica del framework: i tipi di dato fondamentali, i protocolli di consenso, il sistema di messaggistica pub/sub e la configurazione del tema.
+
+## Filosofia delle API
+
+Pasta Protocol segue il principio dell'**al dente interface design**: ogni API è abbastanza rigida da mantenere la forma sotto carico, abbastanza elastica da adattarsi al vostro dominio. Non troverete metodi che mutano lo stato in-place — ogni operazione restituisce un nuovo valore, come una nuova porzione di pasta fresca.
+
+L'interfaccia a linea di comando è accessibile tramite il prompt interattivo `pasta>`, mentre la configurazione del progetto vive nel file `.ricetta` nella root del vostro workspace. I livelli di errore seguono una scala partenopea di gravità crescente: **BRUSCHETTA** (avviso lieve), **PEPERONCINO** (attenzione), **VESUVIO** (errore critico), **TERREMOTO** (sistema compromesso, evacuazione consigliata).
+
+## Struttura del Menu
+
+Le API sono organizzate in quattro sezioni principali. Ogni sezione può essere esplorata indipendentemente, ma la lettura in ordine è raccomandata per i nuovi utenti.
+
+<LinkCard
+  title="Tipi di Pasta"
+  description="Il vocabolario fondamentale del framework: Spaghetto, Rigatone, Fusillo, Raviolo e Lasagna. Interfacce TypeScript complete con esempi di utilizzo."
+  href="/starlight-theme/api/tipi-di-pasta/"
+/>
+
+<LinkCard
+  title="Protocolli di Consenso"
+  description="Pesto (veloce, 2/3 accordo), Genovese (lento ma ricco, accordo totale) e Ragu (saga-based, eventual consistency). Con esempi di codice per ogni protocollo."
+  href="/starlight-theme/api/protocolli/"
+/>
+
+<LinkCard
+  title="GarlicBreadcast"
+  description="Il sistema pub/sub di Pasta Protocol. Messaggi che si diffondono a ogni nodo come il profumo dell'aglio nel forno. API di publish, subscribe e unsubscribe."
+  href="/starlight-theme/api/garlicbreadcast/"
+/>
+
+<LinkCard
+  title="Configurazione"
+  description="Riferimento completo per il file .ricetta e le opzioni del tema Bogoware. Include accentColor, analytics, OgImage e tutti i parametri disponibili in formato YAML, TOML e JSON."
+  href="/starlight-theme/api/configurazione/"
+/>
+
+## Accesso rapido alla CLI
+
+Il client interattivo si avvia con:
+
+```bash
+npx pasta-protocol shell
+```
+
+Una volta avviato, il prompt `pasta>` accetta comandi diretti al cluster. Per un elenco dei comandi disponibili:
+
+```
+pasta> help
+```
+
+## Versioning
+
+Pasta Protocol segue il Semantic Versioning. Le API contrassegnate con `@stable` sono garantite compatibili per tutta la major version corrente. Le API contrassegnate `@cottura-in-corso` sono in fase di stabilizzazione e possono variare nelle patch release.
