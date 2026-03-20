@@ -1,3 +1,0 @@
----
-title: 'a-pizza-napoletana'
----

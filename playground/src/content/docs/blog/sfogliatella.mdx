@@ -1,0 +1,96 @@
+---
+title: "Sfogliatella: Riccia o Frolla?"
+description: "Il grande dibattito napoletano — che è anche, se ci pensiamo bene, il grande dibattito dell'architettura software. Microservizi o monolite? La risposta vi sorprenderà."
+---
+import '../../../styles/florentine-override.css';
+
+<div class="florentine">
+
+# Sfogliatella: Riccia o Frolla?
+
+*Un racconto di Giovanni 'O Cuoco*
+
+---
+
+Se volete scatenare una discussione in una pasticceria napoletana, basta porre una domanda semplice: riccia o frolla?
+
+La risposta che otterrete non sarà una risposta. Sarà una confessione di fede, una dichiarazione di identità, forse una lite bonaria che durerà venti minuti e si concluderà con un'altra sfogliatella presa dal bancone, quasi a dimostrare che in fondo ci si vuole bene.
+
+Perché la sfogliatella è questo: un dolce che divide. Non perché una versione sia superiore all'altra — non lo è, e chiunque vi dica il contrario mente o non ha assaggiato entrambe a colazione davanti a una tazza di caffè napoletano — ma perché le due versioni rappresentano filosofie diverse. Estetiche diverse. Modi diversi di rispondere alla stessa domanda: *come racchiudi la bellezza in una forma?*
+
+---
+
+## La Riccia: Architettura a Strati
+
+La sfogliatella riccia è un miracolo di tecnica. La sua pasta, tirata in fogli sottilissimi e spennellata di strutto, viene arrotolata su sé stessa fino a formare un cono di mille sfoglie sovrapposte. In forno, ogni sfoglia si separa leggermente dalle altre e diventa croccante, friabile, dorata. Quando mordete una riccia, sentite prima la resistenza, poi il cedimento a cascata — come aprire un file compresso che contiene altri file compressi.
+
+Il ripieno — ricotta, semolino, canditi, cannella — arriva dopo questa sequenza di crack e crumble. È quasi un premio per la pazienza.
+
+La riccia è complessa. Richiede abilità per essere prodotta, attenzione per essere consumata (mi raccomando: tenerla inclinata verso l'alto o perdete il ripieno sul vestito, e questo vale sia per la sfogliatella che per i microservizi). Ogni strato fa una cosa sola, bene, e poi passa il controllo al layer successivo.
+
+> *"A sfogliatella riccia è comme nu' sistema che funziona: tanti pezzi, ognuno al suo posto, e a fine ti dà qualcosa di straordinario."*
+>
+> — Mio zio Gennaro, che non sa niente di microservizi ma sa tutto di sfogliatelle.
+
+---
+
+## La Frolla: L'Eleganza del Monolite
+
+La sfogliatella frolla è un'altra storia. Stessa forma esterna — quel cono caratteristico — ma costruita diversamente. Una pasta frolla burrosa, morbida, compatta racchiude lo stesso ripieno. Non c'è la sequenza di sfoglie, non c'è il crac iniziale. C'è invece una dolcezza che comincia subito, una morbidezza che vi accompagna dall'inizio alla fine.
+
+La frolla non si sbriciola. Non vi mette in imbarazzo. Si comporta bene in ogni contesto — a colazione con una tazza di tè, al buffet di un matrimonio, in viaggio su un treno. È prevedibile nel senso migliore del termine: ogni morso è come il precedente, e ogni morso è buono.
+
+Il monolite, lo sappiamo, ha una cattiva reputazione nell'era dei microservizi. Ma chi lavora con sistemi reali sa che c'è qualcosa di rassicurante in un codebase dove tutto è nello stesso posto, dove non devi gestire network calls per far parlare un servizio con l'altro, dove il debugging non richiede di seguire una trace distribuita attraverso dodici container.
+
+---
+
+## Il Confronto Onesto
+
+| | Sfogliatella Riccia | Sfogliatella Frolla |
+|---|---|---|
+| **Struttura** | Strati croccanti sovrapposti | Involucro compatto e uniforme |
+| **Complessità** | Alta tecnica di produzione | Più accessibile da fare in casa |
+| **Esperienza** | Dinamica, progressiva | Coerente, avvolgente |
+| **Contesto ideale** | Colazione al bar, consumo immediato | Viaggio, buffet, ogni momento |
+| **Analogo software** | Architettura a microservizi | Monolite ben strutturato |
+| **Punti di forza** | Scalabilità, separazione dei sapori | Semplicità, zero latenza tra gli strati |
+| **Punti deboli** | Si sbriciola, richiede maestria | Non scala orizzontalmente la croccantezza |
+
+---
+
+## La Verità Che Nessuno Vi Dice
+
+Entrambe sono sfogliatelle. Entrambe sono napoletane. Entrambe sono valide.
+
+<p class="pull-quote">
+  La domanda non è "quale è migliore".<br />
+  La domanda è "quale serve a questo momento?"
+</p>
+
+Il dibattito riccia vs frolla — come il dibattito microservizi vs monolite — è spesso condotto da persone che hanno un'opinione forte su una delle due opzioni e cercano di convincere gli altri a condividerla. Non è un dibattito tecnico. È un dibattito identitario.
+
+E i dibattiti identitari raramente producono decisioni sagge.
+
+Io ho una posizione chiara: la scelta dipende dal contesto. Se sto costruendo un sistema che deve scalare in modo indipendente, dove diversi team lavorano su componenti separati, dove le release devono essere indipendenti — i microservizi hanno senso. Come la riccia ha senso quando voglio quell'esperienza sensoriale stratificata, quella sequenza di crack e dolcezza, quell'architettura visibile anche dalla forma.
+
+Se invece sto costruendo un MVP, o un sistema piccolo e ben definito, o un'applicazione che non ha bisogno di scalare oltre un certo punto — il monolite ben organizzato è la scelta giusta. Come la frolla è la scelta giusta quando voglio qualcosa di affidabile, trasportabile, gentile con il mio vestito.
+
+> *"Ogni mattina prendo la riccia. A fine giornata, se sono stanco, prendo la frolla. Le mangio tutte e due. Nun me faccio problemi."*
+>
+> — Il barista sotto casa mia, che ha risolto il problema con l'empirismo applicato.
+
+---
+
+## Postscriptum Tecnico
+
+C'è un pattern ibrido, nel mondo del software, che si chiama "modular monolith": un monolite strutturato internamente come se fossero microservizi, con confini netti tra i moduli, ma senza la complessità della distribuzione. È la soluzione che molti team adottano quando si rendono conto che i microservizi hanno costi reali.
+
+In pasticceria, questa soluzione non esiste. O è riccia o è frolla.
+
+Forse è questo il vero vantaggio della pasticceria sull'ingegneria del software: le scelte sono più nette, le conseguenze sono immediate, e il feedback arriva al primo morso.
+
+*Prendete una sfogliatella. Poi un'altra dell'altro tipo. Confrontate. Decidete.*
+
+*— Giovanni*
+
+</div>
