@@ -9,7 +9,10 @@
  * @font-face declarations
  * ============================================================ */
 
-/* Cormorant Garamond — Headings (600, 700) */
+/* Cormorant Garamond — Headings (600, 700)
+ * Served from Google Fonts CDN. local() tried first.
+ * The ../assets/fonts/ woff2 files are kept in the package for
+ * offline use but NOT referenced here — Vite can't resolve them. */
 @font-face {
   font-family: 'Cormorant Garamond';
   font-style: normal;
@@ -17,8 +20,7 @@
   font-display: swap;
   src:
     local('Cormorant Garamond SemiBold'),
-    url('../assets/fonts/cormorant-garamond-600.woff2') format('woff2'),
-    url('https://fonts.gstatic.com/s/cormorantgaramond/v16/co3YmX5slCNuHLi8bLeY9MK7whWMhyjYrEtFmSqn.woff2') format('woff2');
+    url('https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2') format('woff2');
 }
 
 @font-face {
@@ -28,8 +30,7 @@
   font-display: swap;
   src:
     local('Cormorant Garamond Bold'),
-    url('../assets/fonts/cormorant-garamond-700.woff2') format('woff2'),
-    url('https://fonts.gstatic.com/s/cormorantgaramond/v16/co3YmX5slCNuHLi8bLeY9MK7whWMhyjYrEtFmSqn.woff2') format('woff2');
+    url('https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2') format('woff2');
 }
 
 /* Crimson Pro — Body (400 normal, 400 italic) */
@@ -40,8 +41,7 @@
   font-display: swap;
   src:
     local('Crimson Pro Regular'),
-    url('../assets/fonts/crimson-pro-400.woff2') format('woff2'),
-    url('https://fonts.gstatic.com/s/crimsonpro/v24/q5uUsoa5M_tv7IihmnkabC5XiXCAlXGks1WZzm18OJE.woff2') format('woff2');
+    url('https://fonts.gstatic.com/s/crimsonpro/v28/q5uUsoa5M_tv7IihmnkabC5XiXCAlXGks1WZzm1MP5s-dtC4yJtE.woff2') format('woff2');
 }
 
 @font-face {
@@ -51,8 +51,7 @@
   font-display: swap;
   src:
     local('Crimson Pro Italic'),
-    url('../assets/fonts/crimson-pro-400-italic.woff2') format('woff2'),
-    url('https://fonts.gstatic.com/s/crimsonpro/v24/q5uSsoa5M_tv7IihmnkabAReu49Y_Bo-HVKMBi4Ue5s7dtC.woff2') format('woff2');
+    url('https://fonts.gstatic.com/s/crimsonpro/v28/q5uSsoa5M_tv7IihmnkabAReu49Y_Bo-HVKMBi6Ue6s8fNGazINFRtM.woff2') format('woff2');
 }
 
 /* Fira Code — Code (400) */
@@ -63,7 +62,6 @@
   font-display: swap;
   src:
     local('Fira Code Regular'),
-    url('../assets/fonts/fira-code-400.woff2') format('woff2'),
     url('https://fonts.gstatic.com/s/firacode/v22/uU9eCBsR6Z2vfE9aq3bL0fxyUs4tcw4W_D1sJVD7Ng.woff2') format('woff2');
 }
 
