@@ -1,6 +1,6 @@
 {
   "name": "@bogoware/starlight-theme",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "packageManager": "pnpm@10.28.2",
   "type": "module",
   "description": "Bogoware brand identity theme for Astro Starlight documentation sites",
