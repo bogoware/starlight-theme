@@ -1,8 +1,9 @@
 ---
 import type { Props } from '@astrojs/starlight/props';
+import config from 'virtual:bogoware-theme/config';
 ---
 
-<footer class="bw-footer">
+<footer class="bw-footer" data-bw-style={config.mode}>
   <div class="bw-footer-inner">
     <div class="bw-footer-brand">
       <span class="bw-footer-copyright">&copy; {new Date().getFullYear()} Bogoware. Built with 💜</span>

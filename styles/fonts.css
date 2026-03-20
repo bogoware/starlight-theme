@@ -1,0 +1,127 @@
+/*
+ * Bogoware Starlight Theme — Font Registrations
+ *
+ * All @font-face declarations for both Architect and Florentine modes.
+ * Font-face rules are global by nature — they register font names but
+ * do not apply them. Both sets coexist harmlessly; the active mode's
+ * CSS custom properties decide which registered font is actually used.
+ *
+ * Served from Google Fonts CDN. local() is tried first for users
+ * who have the font installed. The ../assets/fonts/ woff2 files are
+ * kept in the package for offline/bundled use but are NOT referenced
+ * here — Vite cannot resolve paths from node_modules at build time.
+ */
+
+/* ============================================================
+ * Architect mode fonts
+ * ============================================================ */
+
+/* Space Grotesk — Headings (700, 800) */
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Space Grotesk Bold'),
+    url('https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVnskPMBBSSJLm2E.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src:
+    local('Space Grotesk ExtraBold'),
+    url('https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVnskPMBBSSJLm2E.woff2') format('woff2');
+}
+
+/* DM Sans — Body (400, 500) */
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('DM Sans Regular'),
+    url('https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K6z9mXg.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    local('DM Sans Medium'),
+    url('https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K6z9mXg.woff2') format('woff2');
+}
+
+/* Space Mono — Code (400) */
+@font-face {
+  font-family: 'Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Space Mono Regular'),
+    url('https://fonts.gstatic.com/s/spacemono/v13/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2') format('woff2');
+}
+
+/* ============================================================
+ * Florentine mode fonts
+ * ============================================================ */
+
+/* Cormorant Garamond — Headings (600, 700) */
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    local('Cormorant Garamond SemiBold'),
+    url('https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    local('Cormorant Garamond Bold'),
+    url('https://fonts.gstatic.com/s/cormorantgaramond/v21/co3bmX5slCNuHLi8bLeY9MK7whWMhyjYqXtKky2F7g.woff2') format('woff2');
+}
+
+/* Crimson Pro — Body (400 normal, 400 italic) */
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Crimson Pro Regular'),
+    url('https://fonts.gstatic.com/s/crimsonpro/v28/q5uUsoa5M_tv7IihmnkabC5XiXCAlXGks1WZzm1MP5s-dtC4yJtE.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Crimson Pro Italic'),
+    url('https://fonts.gstatic.com/s/crimsonpro/v28/q5uSsoa5M_tv7IihmnkabAReu49Y_Bo-HVKMBi6Ue6s8fNGazINFRtM.woff2') format('woff2');
+}
+
+/* Fira Code — Code (400) */
+@font-face {
+  font-family: 'Fira Code';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    local('Fira Code Regular'),
+    url('https://fonts.gstatic.com/s/firacode/v22/uU9eCBsR6Z2vfE9aq3bL0fxyUs4tcw4W_D1sJVD7Ng.woff2') format('woff2');
+}

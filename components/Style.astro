@@ -1,0 +1,20 @@
+---
+/**
+ * Inline style switching component for MDX content.
+ *
+ * Wraps its children in the specified typography mode,
+ * overriding the page-level style for that section.
+ *
+ * Usage:
+ *   import Style from '@bogoware/starlight-theme/components/Style.astro';
+ *   <Style mode="florentine">Literary content here.</Style>
+ */
+interface Props {
+  mode: 'architect' | 'florentine';
+}
+const { mode } = Astro.props;
+---
+
+<div data-bw-style={mode}>
+  <slot />
+</div>

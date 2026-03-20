@@ -26,13 +26,24 @@ const analyticsSchema = z.object({
   cookieless: z.boolean().default(false),
 });
 
+const styleRouteSchema = z.object({
+  pattern: z.string(),
+  style: z.enum(['architect', 'florentine']),
+});
+
 export const bogowareThemeSchema = z.object({
   mode: z.enum(['architect', 'florentine']).default('architect'),
+  styleRoutes: z.array(styleRouteSchema).default([]),
   logoVariant: z.enum(['full', 'simplified', 'monochrome']).default('simplified'),
   accentColor: z.string().optional(),
   fieldLines: z.boolean().default(true),
   seo: seoSchema.default({}),
   analytics: analyticsSchema.default({}),
+});
+
+/** Zod schema for extending Starlight's docsSchema with per-page style override. */
+export const themeStyleSchema = z.object({
+  themeStyle: z.enum(['architect', 'florentine']).optional(),
 });
 
 export type BogowareThemeConfig = z.input<typeof bogowareThemeSchema>;

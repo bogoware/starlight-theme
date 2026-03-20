@@ -8,9 +8,16 @@ export default defineConfig({
   integrations: [
     starlight({
       title: 'Pasta Protocol',
+      logo: {
+        src: './src/assets/logo-favicon.svg',
+        replacesTitle: false,
+      },
       plugins: [
         bogowareTheme({
           mode: 'architect',
+          styleRoutes: [
+            { pattern: 'blog/**', style: 'florentine' },
+          ],
           logoVariant: 'simplified',
           fieldLines: true,
           seo: {

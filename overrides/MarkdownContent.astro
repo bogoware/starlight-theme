@@ -1,0 +1,17 @@
+---
+import type { Props } from '@astrojs/starlight/props';
+import '@astrojs/starlight/style/markdown.css';
+import { resolveStyle } from '../lib/resolve-style.js';
+import config from 'virtual:bogoware-theme/config';
+
+const { id, entry } = Astro.props;
+const themeStyle = (entry?.data as Record<string, unknown>)?.themeStyle as
+  | 'architect'
+  | 'florentine'
+  | undefined;
+const resolvedStyle = resolveStyle(id, themeStyle, config);
+---
+
+<div class="sl-markdown-content" data-bw-style={resolvedStyle}>
+  <slot />
+</div>

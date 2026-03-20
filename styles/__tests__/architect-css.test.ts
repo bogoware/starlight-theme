@@ -7,24 +7,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const architectCss = readFileSync(resolve(__dirname, '..', 'architect.css'), 'utf-8');
 
 describe('architect.css', () => {
-  it('should define Space Grotesk font-face for headings', () => {
-    expect(architectCss).toContain("font-family: 'Space Grotesk'");
+  it('should scope rules under [data-bw-style="architect"]', () => {
+    expect(architectCss).toContain('[data-bw-style="architect"]');
   });
 
-  it('should define DM Sans font-face for body text', () => {
-    expect(architectCss).toContain("font-family: 'DM Sans'");
-  });
-
-  it('should define Space Mono font-face for code', () => {
-    expect(architectCss).toContain("font-family: 'Space Mono'");
-  });
-
-  it('should use font-display: swap for all font-faces', () => {
-    expect(architectCss).toContain('font-display: swap');
-  });
-
-  it('should reference woff2 font files', () => {
-    expect(architectCss).toContain('.woff2');
+  it('should NOT contain @font-face declarations (moved to fonts.css)', () => {
+    expect(architectCss).not.toContain('@font-face');
   });
 
   it('should define heading font token', () => {
@@ -46,5 +34,11 @@ describe('architect.css', () => {
   it('should map to Starlight font variables', () => {
     expect(architectCss).toContain('--sl-font: var(--bw-font-body)');
     expect(architectCss).toContain('--sl-font-mono: var(--bw-font-code)');
+  });
+
+  it('should scope heading styles under data-bw-style', () => {
+    expect(architectCss).toContain('[data-bw-style="architect"] h1');
+    expect(architectCss).toContain('[data-bw-style="architect"] h2');
+    expect(architectCss).toContain('[data-bw-style="architect"] h3');
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "@bogoware/starlight-theme",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "packageManager": "pnpm@10.28.2",
   "type": "module",
   "description": "Bogoware brand identity theme for Astro Starlight documentation sites",
@@ -16,6 +16,8 @@
   },
   "exports": {
     ".": "./index.ts",
+    "./schema": "./schema.ts",
+    "./lib/*": "./lib/*",
     "./styles/*": "./styles/*",
     "./overrides/*": "./overrides/*",
     "./components/*": "./components/*",
@@ -43,6 +45,8 @@
   "files": [
     "index.ts",
     "schema.ts",
+    "virtual.d.ts",
+    "lib/",
     "styles/",
     "overrides/",
     "components/",
