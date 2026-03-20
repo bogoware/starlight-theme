@@ -1,0 +1,111 @@
+---
+title: 'Installazione'
+description: 'Come mettere Pasta Protocol nella vostra cucina digitale'
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+> *"'A cucina nun se costruisce c'o pensiero — se costruisce c'e mane."*
+> (The kitchen isn't built with thought — it's built with hands.)
+
+Before a single strand of spaghetti can be deployed to your distributed cluster, you must first prepare your kitchen. Pasta Protocol requires Node.js 18 or higher — think of it as the minimum oven temperature. Below that, the dough won't rise; above it, the Maillard reaction produces beautiful, golden distributed systems.
+
+Pasta Protocol ships as a single npm package: `@pasta-protocol/core`. It bundles everything you need to run your first kitchen: the `KitchenManager`, the `RicettaParser`, the `GarlicBreadcast` event bus, and the `Termometro` health-check subsystem. Optional adapters for persistence (La Dispensa) and consensus (Pesto Consensus) are distributed as separate packages so your `node_modules` stays as lean as a Neapolitan waist.
+
+## Requisiti di Sistema
+
+| Requisito | Minimo | Raccomandato |
+|-----------|--------|--------------|
+| Node.js | 18.x | 20.x LTS |
+| Memory | 512 MB | 2 GB |
+| Storage | 200 MB | 1 GB |
+| CPU | 1 core | 4+ cores |
+| OS | Linux, macOS, Windows | Linux (production) |
+
+## Installazione del Pacchetto
+
+<Tabs>
+  <TabItem label="npm">
+    ```bash
+    npm install @pasta-protocol/core
+    ```
+
+    Per installare anche gli adattatori opzionali:
+
+    ```bash
+    npm install @pasta-protocol/core @pasta-protocol/dispensa @pasta-protocol/pesto
+    ```
+  </TabItem>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add @pasta-protocol/core
+    ```
+
+    Per installare anche gli adattatori opzionali:
+
+    ```bash
+    pnpm add @pasta-protocol/core @pasta-protocol/dispensa @pasta-protocol/pesto
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add @pasta-protocol/core
+    ```
+
+    Per installare anche gli adattatori opzionali:
+
+    ```bash
+    yarn add @pasta-protocol/core @pasta-protocol/dispensa @pasta-protocol/pesto
+    ```
+  </TabItem>
+</Tabs>
+
+## Importazione Base
+
+Once installed, the core entry point gives you access to everything you need to wire up your first kitchen:
+
+```ts
+import {
+  KitchenManager,
+  GarlicBreadcast,
+  Termometro,
+  type RicettaConfig,
+} from '@pasta-protocol/core';
+```
+
+For TypeScript projects, all types are bundled — no `@types/*` packages required. The library is written in strict TypeScript and exports full type definitions. If your `tsconfig.json` uses `"moduleResolution": "bundler"` or `"node16"`, you'll get path-completion and inline documentation straight from your editor.
+
+## Cosa è Incluso
+
+The `@pasta-protocol/core` package contains the following modules:
+
+**`KitchenManager`** — the central orchestrator. Bootstraps your kitchen from a `.ricetta` configuration file, manages node lifecycle, and coordinates all subsystems. Think of it as the head chef who reads the recipe and delegates to the brigade.
+
+**`GarlicBreadcast`** — the pub/sub event bus. Topics are registered at kitchen startup and distributed to all connected nodes. Messages spread through the cluster the way garlic butter spreads on warm bread: quickly, thoroughly, and deliciously.
+
+**`Termometro`** — the health-check system. Exposes a `/sono-vivo` HTTP endpoint on each node and aggregates health metrics across the cluster. When a node goes cold, the Termometro raises a `PEPERONCINO` warning; when a majority of nodes are unresponsive, it escalates to `VESUVIO`.
+
+**`RicettaParser`** — parses `.ricetta` configuration files in either YAML or TOML format, validates the schema, and provides a fully-typed configuration object to the rest of the system.
+
+**`Logger`** — a structured logger that emits log entries with Pasta Protocol's named log levels: `SUSSURRO` (debug), `VOCE` (info), `GRIDO` (warn), `URLO` (error). Outputs to stdout as JSON or to a configurable sink.
+
+**`ErrorRegistry`** — maps error codes to their severity levels: `BRUSCHETTA` for informational anomalies, `PEPERONCINO` for warnings, `VESUVIO` for critical failures, and `TERREMOTO` for fatal, cluster-halting events.
+
+## Verifica dell'Installazione
+
+After installing, verify that the CLI is available:
+
+```bash
+npx pasta --version
+# => Pasta Protocol v2.4.1 — 'O meglio che c'è
+```
+
+The `pasta>` REPL is your interactive kitchen terminal. You can launch it at any time:
+
+```bash
+npx pasta shell
+pasta> status
+# => Kitchen: IDLE | Nodes: 0/0 | Uptime: 0s
+```
+
+If you see the `pasta>` prompt, congratulations — your kitchen is installed and ready to receive its first ricetta.

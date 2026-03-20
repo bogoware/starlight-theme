@@ -1,0 +1,194 @@
+---
+title: "'O Primo Piatto"
+description: 'Il vostro primo sistema pub/sub con GarlicBreadcast'
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+> *"'O primmo piatto nun è 'a fine — è 'o principio d'o pranzo."*
+> (The first course is not the end — it is the beginning of the meal.)
+
+Your kitchen is configured and your first node is running. Now it's time to serve your first dish. We're going to build a simple publish/subscribe system using `GarlicBreadcast` — Pasta Protocol's distributed event bus. By the end of this guide you will have two logical services communicating asynchronously across the kitchen: an **order producer** that publishes new orders, and an **order consumer** that processes them.
+
+<Aside type="note">
+**GarlicBreadcast and the Vampire Rule:** GarlicBreadcast is named after the phenomenon whereby garlic bread, once placed on a table, is irresistible — it spreads to every plate whether you intended it to or not. In the same way, a message published to a GarlicBreadcast topic is **delivered to every subscriber on every node in the cluster**. There is no concept of a "private channel" within a topic. If you need point-to-point messaging, use the `Dispensa` request-reply API instead. The Vampire Rule exists for a reason: stale caches, like vampires, cannot survive the broadcast of fresh garlic.
+</Aside>
+
+## La Struttura del Progetto
+
+We'll build a minimal but complete example. Create the following files alongside your `kitchen.ricetta`:
+
+```
+my-kitchen/
+├── kitchen.ricetta
+├── kitchen.ts          # KitchenManager bootstrap
+├── producer.ts         # Order publisher
+└── consumer.ts         # Order subscriber
+```
+
+## Il File di Configurazione
+
+Update your `kitchen.ricetta` to include the `ordini` topic we'll be using:
+
+```yaml title="kitchen.ricetta"
+kitchen:
+  name: "Trattoria da Giovanni"
+  region: "napoli-1"
+  log_level: VOCE
+
+nodes:
+  - id: "cucina"
+    host: "localhost"
+    port: 3000
+    role: primary
+
+garlicbreadcast:
+  topics:
+    - ordini
+    - conferme
+
+healthcheck:
+  endpoint: /sono-vivo
+  interval_cotture: 5
+  threshold: 3
+```
+
+## Il Bootstrap della Cucina
+
+```ts title="kitchen.ts"
+import { KitchenManager } from '@pasta-protocol/core';
+
+export async function bootstrapKitchen() {
+  const kitchen = await KitchenManager.fromRicetta('./kitchen.ricetta');
+  await kitchen.addNode('cucina');
+
+  process.on('SIGTERM', () => kitchen.shutdown('SIGTERM received'));
+  process.on('SIGINT', () => kitchen.shutdown('SIGINT received'));
+
+  return kitchen;
+}
+```
+
+## Il Produttore
+
+The producer publishes an `Ordine` event every time a customer places an order. Notice that we define the event shape as a TypeScript interface — GarlicBreadcast is fully generic and preserves your types end to end.
+
+```ts title="producer.ts" {3-5}
+import type { KitchenManager } from '@pasta-protocol/core';
+
+interface Ordine {
+  id: string;
+  piatto: string;
+  tavolo: number;
+  timestamp: number;
+}
+
+export function createProducer(kitchen: KitchenManager) {
+  const bus = kitchen.garlicBreadcast;
+
+  return {
+    async pubblicaOrdine(piatto: string, tavolo: number): Promise<void> {
+      const ordine: Ordine = {
+        id: crypto.randomUUID(),
+        piatto,
+        tavolo,
+        timestamp: Date.now(),
+      };
+
+      await bus.publish('ordini', ordine);
+
+      kitchen.logger.voce('Ordine pubblicato', { ordineId: ordine.id, piatto, tavolo });
+    },
+  };
+}
+```
+
+The highlighted lines (3–5) show the `Ordine` interface that forms the contract between producer and consumer. In a real application you'd extract this into a shared `types.ts` file so both sides are guaranteed to agree on the shape.
+
+## Il Consumatore
+
+The consumer subscribes to the `ordini` topic and processes each incoming event. Subscriptions are persistent: if the node temporarily disconnects and reconnects, GarlicBreadcast replays any missed messages (subject to the configured retention window).
+
+```ts title="consumer.ts" {8-12}
+import type { KitchenManager } from '@pasta-protocol/core';
+
+interface Ordine {
+  id: string;
+  piatto: string;
+  tavolo: number;
+  timestamp: number;
+}
+
+async function elaboraOrdine(ordine: Ordine): Promise<void> {
+  kitchen.logger.voce('Elaborazione ordine', { ordineId: ordine.id });
+  // Simulate kitchen preparation time
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  kitchen.logger.voce('Ordine pronto', { ordineId: ordine.id, piatto: ordine.piatto });
+}
+
+export function createConsumer(kitchen: KitchenManager) {
+  const bus = kitchen.garlicBreadcast;
+
+  bus.subscribe<Ordine>('ordini', async (ordine) => {
+    await elaboraOrdine(ordine);
+
+    await bus.publish('conferme', {
+      ordineId: ordine.id,
+      statoOrdine: 'PRONTO',
+      tavolo: ordine.tavolo,
+    });
+  });
+
+  kitchen.logger.voce('Consumer attivo sul topic "ordini"');
+}
+```
+
+The highlighted lines (8–12) show `elaboraOrdine` — the actual business logic handler. Keeping the handler function separate from the subscription setup means you can unit test it without needing a real GarlicBreadcast instance.
+
+## Mettere Tutto Insieme
+
+Finally, wire the bootstrap, producer, and consumer into your application entry point:
+
+```ts title="main.ts"
+import { bootstrapKitchen } from './kitchen.js';
+import { createProducer } from './producer.js';
+import { createConsumer } from './consumer.js';
+
+const kitchen = await bootstrapKitchen();
+
+createConsumer(kitchen);
+const producer = createProducer(kitchen);
+
+// Simulate three incoming orders
+await producer.pubblicaOrdine('Spaghetti alle Vongole', 5);
+await producer.pubblicaOrdine('Rigatoni all\'Amatriciana', 3);
+await producer.pubblicaOrdine('Penne al Pesto', 7);
+
+await kitchen.startCooking();
+```
+
+Run it:
+
+```bash
+npx ts-node main.ts
+```
+
+You should see interleaved `VOCE` log entries as the producer publishes and the consumer processes each order. The `conferme` topic will receive a confirmation message for each successfully elaborated order.
+
+```
+{"level":"VOCE","msg":"Consumer attivo sul topic \"ordini\""}
+{"level":"VOCE","msg":"Ordine pubblicato","ordineId":"a1b2c3","piatto":"Spaghetti alle Vongole","tavolo":5}
+{"level":"VOCE","msg":"Elaborazione ordine","ordineId":"a1b2c3"}
+{"level":"VOCE","msg":"Ordine pubblicato","ordineId":"d4e5f6","piatto":"Rigatoni all'Amatriciana","tavolo":3}
+{"level":"VOCE","msg":"Ordine pronto","ordineId":"a1b2c3","piatto":"Spaghetti alle Vongole"}
+```
+
+## Prossimi Passi
+
+Your first piatto is served. The kitchen is running, nodes are communicating, and events are flowing. From here you can:
+
+- **Explore the Architecture** — understand how `KitchenManager`, `GarlicBreadcast`, and `Termometro` collaborate in [La Cucina](/starlight-theme/architecture/panoramica/).
+- **Learn the full API** — browse all available classes and methods in ['O Menu](/starlight-theme/api/panoramica/).
+- **Apply DOC patterns** — learn the certified architectural patterns that guarantee your system stays al dente under production load in the [Ricettario](/starlight-theme/patterns/certificazione-doc/).
+
+*Buon appetito — e buona fortuna con 'a vostra prima cucina distribuita.*

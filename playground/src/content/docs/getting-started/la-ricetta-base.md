@@ -1,3 +1,0 @@
----
-title: 'la-ricetta-base'
----

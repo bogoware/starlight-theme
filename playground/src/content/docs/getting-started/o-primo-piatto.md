@@ -1,3 +1,0 @@
----
-title: 'o-primo-piatto'
----

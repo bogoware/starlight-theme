@@ -1,0 +1,159 @@
+---
+title: 'La Ricetta Base'
+description: 'Come preparare la vostra prima configurazione Pasta Protocol'
+---
+
+import { Tabs, TabItem, Steps, Aside } from '@astrojs/starlight/components';
+
+> *"'A ricetta è 'a legge — ma 'o cuoco è 'o re."*
+> (The recipe is the law — but the cook is the king.)
+
+Every kitchen needs a recipe. In Pasta Protocol, the recipe is a `.ricetta` file — a declarative configuration document that describes your cluster's topology, resource limits, consensus strategy, and operational parameters. The framework reads this file at startup and uses it to construct the entire runtime environment. No code required for basic configuration: if it's in the `.ricetta`, it will be made so.
+
+This guide walks you through creating your first `.ricetta`, initialising the kitchen, adding your first node, and starting your first cook cycle. By the end you will have a running single-node cluster ready to serve its first requests.
+
+<Steps>
+
+1. **Crea il file `.ricetta`**
+
+   Create a file named `kitchen.ricetta` in the root of your project. This is the primary configuration file that `KitchenManager` will look for by default. You can use either YAML or TOML syntax — both are fully supported.
+
+   <Tabs>
+     <TabItem label="YAML">
+       ```yaml title="kitchen.ricetta"
+       kitchen:
+         name: "La Mia Prima Cucina"
+         region: "napoli-1"
+         log_level: VOCE
+
+       nodes:
+         - id: "nodo-uno"
+           host: "localhost"
+           port: 3000
+           role: primary
+
+       consensus:
+         strategy: pesto
+         quorum: 1
+         timeout_cotture: 3
+
+       healthcheck:
+         endpoint: /sono-vivo
+         interval_cotture: 5
+         threshold: 3
+
+       garlicbreadcast:
+         topics:
+           - ordini
+           - notifiche
+           - errori
+       ```
+     </TabItem>
+     <TabItem label="TOML">
+       ```toml title="kitchen.ricetta"
+       [kitchen]
+       name = "La Mia Prima Cucina"
+       region = "napoli-1"
+       log_level = "VOCE"
+
+       [[nodes]]
+       id = "nodo-uno"
+       host = "localhost"
+       port = 3000
+       role = "primary"
+
+       [consensus]
+       strategy = "pesto"
+       quorum = 1
+       timeout_cotture = 3
+
+       [healthcheck]
+       endpoint = "/sono-vivo"
+       interval_cotture = 5
+       threshold = 3
+
+       [garlicbreadcast]
+       topics = ["ordini", "notifiche", "errori"]
+       ```
+     </TabItem>
+   </Tabs>
+
+   The `timeout_cotture` and `interval_cotture` fields are expressed in **cotture** — Pasta Protocol's native time unit, equal to one second. This deliberate naming choice exists to remind operators that distributed systems, like good cooking, cannot be rushed.
+
+2. **Inizializza la cucina**
+
+   In your main application file, import `KitchenManager` and point it at your ricetta:
+
+   ```ts title="main.ts"
+   import { KitchenManager } from '@pasta-protocol/core';
+
+   const kitchen = await KitchenManager.fromRicetta('./kitchen.ricetta');
+
+   console.log(`Kitchen "${kitchen.name}" initialised in region ${kitchen.region}`);
+   // => Kitchen "La Mia Prima Cucina" initialised in region napoli-1
+   ```
+
+   `KitchenManager.fromRicetta()` is an async factory that parses the configuration, validates all fields, instantiates internal subsystems, and returns a fully-wired `KitchenManager` instance. If the configuration contains errors, it throws a `BRUSCHETTA`-level `ConfigurationError` with a descriptive message and the line number of the offending field.
+
+3. **Aggiungi il primo nodo**
+
+   With the kitchen initialised, register your first worker node. The node ID must match one of the entries declared in your `.ricetta` file:
+
+   ```ts title="main.ts"
+   import { KitchenManager, WorkerNode } from '@pasta-protocol/core';
+
+   const kitchen = await KitchenManager.fromRicetta('./kitchen.ricetta');
+
+   const nodoUno = await kitchen.addNode('nodo-uno');
+   console.log(`Node "${nodoUno.id}" joined the kitchen — status: ${nodoUno.status}`);
+   // => Node "nodo-uno" joined the kitchen — status: READY
+   ```
+
+   `kitchen.addNode()` binds the node's network socket, registers it with the `Termometro` health subsystem, and announces its presence over `GarlicBreadcast` so any other nodes in the cluster are immediately aware. When running a single-node development kitchen the node reaches `READY` status almost instantly.
+
+4. **Avvia la cottura**
+
+   Call `kitchen.startCooking()` to begin the kitchen's main event loop. This method returns a `Promise<void>` that resolves only when the kitchen is explicitly shut down via `kitchen.shutdown()` or when a `TERREMOTO`-level error occurs.
+
+   ```ts title="main.ts"
+   import { KitchenManager } from '@pasta-protocol/core';
+
+   const kitchen = await KitchenManager.fromRicetta('./kitchen.ricetta');
+   await kitchen.addNode('nodo-uno');
+
+   // Graceful shutdown on SIGTERM
+   process.on('SIGTERM', () => kitchen.shutdown('SIGTERM received'));
+
+   await kitchen.startCooking();
+   // Kitchen is now running. Press Ctrl+C or send SIGTERM to stop.
+   ```
+
+   You should see structured log output in `VOCE` level:
+
+   ```
+   {"level":"VOCE","ts":"2024-03-15T10:00:00.000Z","msg":"Kitchen started","kitchen":"La Mia Prima Cucina","nodes":1}
+   {"level":"VOCE","ts":"2024-03-15T10:00:00.001Z","msg":"Healthcheck active","endpoint":"/sono-vivo","port":3000}
+   ```
+
+   Navigate to `http://localhost:3000/sono-vivo` in your browser. You should see:
+
+   ```json
+   { "status": "vivo", "kitchen": "La Mia Prima Cucina", "nodes": 1, "uptime_cotture": 3 }
+   ```
+
+</Steps>
+
+<Aside type="tip">
+**Consiglio d'a Nonna:** When your nonna makes ragù, she never rushes the soffritto. She lets the onion, celery, and carrot cook low and slow until they dissolve into sweetness. In the same way, give your `KitchenManager` time to initialise properly before adding nodes. The `await` on `fromRicetta()` is not optional — skipping it is like adding meat to a cold pan. You'll end up with something that technically compiles but tastes like chaos.
+</Aside>
+
+## Configurazione Avanzata
+
+Once you're comfortable with the base ricetta, you can extend it with additional sections:
+
+- `[dispensa]` — configures the persistence layer (requires `@pasta-protocol/dispensa`)
+- `[pesto]` — fine-tunes the consensus engine parameters
+- `[ragu]` — configures long-running orchestration workflows
+- `[certificazione]` — declares DOC-certified endpoints that enforce strict SLA guarantees
+
+Each of these is documented in detail in their respective sections. For now, the base ricetta is enough to proceed to your first real workload in the next section.
