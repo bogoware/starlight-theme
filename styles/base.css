@@ -97,3 +97,10 @@
   --sl-color-bg-nav: var(--bw-surface);
   --sl-color-bg-sidebar: var(--bw-bg);
 }
+
+/* ============================================================
+ * Header social icons — larger, aligned with site title
+ * ============================================================ */
+header .right-group .social-icons a {
+  --sl-icon-size: 1.5rem;
+}
