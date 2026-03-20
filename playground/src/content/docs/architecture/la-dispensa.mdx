@@ -1,0 +1,255 @@
+---
+title: "La Dispensa — Il Layer di Storage"
+description: "Ogni ingrediente al suo posto. Il sistema di persistenza del Pasta Protocol."
+---
+
+import { Tabs, TabItem, Aside } from '@astrojs/starlight/components';
+
+> *"A dispensa bbona nun se vede — se sente quanno manca."*
+> — Proverbio napoletano
+
+Nessuna cucina sopravvive senza una dispensa ben organizzata. Nel Pasta Protocol, **La Dispensa** è il layer di storage distribuito che garantisce la persistenza degli stati, la durabilità dei dati e la coerenza tra i nodi del cluster. Non importa cosa succede fuori — terremoti, riavvii, partizioni di rete — la dispensa sa dove si trovano gli ingredienti.
+
+Il layer astrae tre backend distinti attraverso un'interfaccia unificata. Puoi cambiare il backend senza toccare una riga di logica applicativa. La pasta rimane sempre la pasta, che tu usi un tavolo di marmo o un banco di acciaio.
+
+## L'Interfaccia Unificata
+
+```typescript
+interface Dispensa {
+  /** Recupera un valore per chiave. Ritorna undefined se assente. */
+  get<T>(key: string): Promise<T | undefined>;
+
+  /** Salva un valore con TTL opzionale (in cotture). */
+  set<T>(key: string, value: T, ttlCotture?: number): Promise<void>;
+
+  /** Rimuove una chiave. Idempotente se la chiave non esiste. */
+  delete(key: string): Promise<boolean>;
+
+  /** Verifica l'esistenza di una chiave senza recuperare il valore. */
+  exists(key: string): Promise<boolean>;
+
+  /** Operazione atomica compare-and-swap. */
+  cas<T>(key: string, expected: T, next: T): Promise<boolean>;
+
+  /** Elenca le chiavi corrispondenti a un pattern. */
+  keys(pattern: string): AsyncIterable<string>;
+
+  /** Transazione atomica multi-chiave. */
+  transaction(ops: ReadonlyArray<DispensaOp>): Promise<TransactionResult>;
+}
+```
+
+<Aside type="caution">
+**Attenzione alla consistenza eventuale.** La Dispensa garantisce **al dente consistency** — non strong consistency. Come la mozzarella appena tirata, i dati replicati su più nodi impiegano qualche attimo a stabilizzarsi. Non aspettarti che una scrittura su un nodo sia immediatamente visibile su tutti gli altri. Usa `cas()` per operazioni critiche che richiedono atomicità, e progetta il tuo sistema per tollerare letture leggermente stantie nei periodi di alta replicazione. *Chi ha fretta mangia pasta cruda.*
+</Aside>
+
+## I Backend di Storage
+
+<Tabs>
+  <TabItem label="🍕 Tavolo di Lavoro (InMemory)">
+
+Il backend **Tavolo di Lavoro** è lo storage in memoria — velocissimo, senza dipendenze esterne, perfetto per sviluppo, test e cache locale. Come il tavolo di marmo del pizzaiolo: immediato, sempre disponibile, ma tutto si perde quando si spegne la luce.
+
+```typescript
+import { createDispensa, InMemoryBackend } from '@pasta-protocol/storage';
+
+const dispensa = createDispensa({
+  backend: new InMemoryBackend({
+    maxEntries: 10_000,
+    evictionPolicy: 'LRU',
+    ttlCheckIntervalCotture: 5,
+  }),
+});
+
+// Lettura e scrittura immediate
+await dispensa.set('ordine:001', { tavolo: 7, piatti: ['margherita', 'calzone'] });
+const ordine = await dispensa.get<Ordine>('ordine:001');
+```
+
+Configurazione `.ricetta`:
+
+```toml
+[dispensa]
+backend = "in-memory"
+max_entries = 10000
+eviction_policy = "LRU"
+ttl_check_interval_cotture = 5
+```
+
+**Quando usarlo:**
+- Ambiente di sviluppo locale
+- Test di integrazione isolati
+- Cache di secondo livello su singolo nodo
+- Prototipazione rapida
+
+**Limitazioni:** I dati non sopravvivono al riavvio del nodo. Non adatto per produzione con requisiti di durabilità.
+
+  </TabItem>
+  <TabItem label="🧀 Mozzarella Cache (Redis)">
+
+Il backend **Mozzarella Cache** usa Redis come layer di storage distribuito ad alta velocità. Come la mozzarella di bufala: fresca, elastica, e si distribuisce benissimo su più piatti. Ideale per sessioni, cache condivisa tra nodi e dati con TTL breve.
+
+```typescript
+import { createDispensa, RedisBackend } from '@pasta-protocol/storage';
+
+const dispensa = createDispensa({
+  backend: new RedisBackend({
+    host: 'redis.cucina.local',
+    port: 6379,
+    password: process.env.REDIS_PASSWORD,
+    db: 0,
+    keyPrefix: 'pasta:',
+    connectionTimeoutCotture: 2,
+    maxRetriesPerRequest: 3,
+    cluster: {
+      enabled: false,
+    },
+  }),
+});
+
+// Operazione atomica con TTL
+await dispensa.set('sessione:abc123', { userId: 42 }, /* ttlCotture */ 20);
+
+// CAS per aggiornamento sicuro
+const updated = await dispensa.cas(
+  'contatore:ordini',
+  { valore: 99 },
+  { valore: 100 }
+);
+```
+
+Configurazione `.ricetta`:
+
+```toml
+[dispensa]
+backend = "redis"
+host = "redis.cucina.local"
+port = 6379
+db = 0
+key_prefix = "pasta:"
+connection_timeout_cotture = 2
+
+[dispensa.tls]
+enabled = true
+ca_cert = "/etc/pasta/certs/redis-ca.pem"
+```
+
+**Quando usarlo:**
+- Cache distribuita tra più nodi Pizzaiolo
+- Gestione delle sessioni
+- Rate limiting e contatori distribuiti
+- Pub/sub tramite GarlicBreadcast
+
+**Considerazione:** La consistenza è eventuale nella modalità cluster Redis. Configura `WAIT` per scenari critici.
+
+  </TabItem>
+  <TabItem label="🍷 Cantina (PostgreSQL)">
+
+Il backend **Cantina** usa PostgreSQL come storage durevole e transazionale. Come la cantina di un ristorante stellato: non è velocissima, ma ogni bottiglia è catalogata, ogni annata conservata, ogni transazione garantita. Per dati che non puoi permetterti di perdere.
+
+```typescript
+import { createDispensa, PostgresBackend } from '@pasta-protocol/storage';
+
+const dispensa = createDispensa({
+  backend: new PostgresBackend({
+    connectionString: process.env.DATABASE_URL,
+    schema: 'pasta_protocol',
+    tableName: 'dispensa_kv',
+    pool: {
+      min: 2,
+      max: 10,
+      idleTimeoutCotture: 30,
+      connectionTimeoutCotture: 5,
+    },
+    serialization: 'jsonb',
+  }),
+});
+
+// Transazione multi-operazione atomica
+const result = await dispensa.transaction([
+  { op: 'set', key: 'ordine:007', value: nuovoOrdine },
+  { op: 'set', key: 'inventario:farina', value: inventarioAggiornato },
+  { op: 'delete', key: 'carrello:temp:007' },
+]);
+
+if (!result.success) {
+  // Tutte le operazioni sono state annullate (rollback automatico)
+  throw new DispensaError('VESUVIO', result.reason);
+}
+```
+
+Configurazione `.ricetta`:
+
+```toml
+[dispensa]
+backend = "postgres"
+connection_string = "${DATABASE_URL}"
+schema = "pasta_protocol"
+table_name = "dispensa_kv"
+serialization = "jsonb"
+
+[dispensa.pool]
+min = 2
+max = 10
+idle_timeout_cotture = 30
+```
+
+**Quando usarlo:**
+- Dati di business critici (ordini, transazioni, stato saga)
+- Audit log e tracciabilità
+- Qualsiasi dato che non può essere perso
+- Scenari che richiedono transazioni ACID complete
+
+**Nota sulle performance:** Le query sulla Cantina hanno latenza più alta rispetto agli altri backend. Usa indici appropriati sulla colonna `key` e considera un layer di Mozzarella Cache davanti per le letture frequenti.
+
+  </TabItem>
+</Tabs>
+
+## Strategie di Caching Multi-Livello
+
+Il Pasta Protocol supporta una configurazione a livelli — come una layered lasagna. Scrivi nella Cantina per durabilità, ma leggi prima dalla Mozzarella Cache:
+
+```typescript
+import { createDispensa, LayeredBackend } from '@pasta-protocol/storage';
+
+const dispensa = createDispensa({
+  backend: new LayeredBackend({
+    layers: [
+      { backend: new InMemoryBackend({ maxEntries: 1_000 }), ttlCotture: 2 },
+      { backend: new RedisBackend({ host: 'redis.local' }), ttlCotture: 60 },
+      { backend: new PostgresBackend({ connectionString: process.env.DATABASE_URL }) },
+    ],
+    writeStrategy: 'WRITE_THROUGH',   // scrive su tutti i livelli
+    readStrategy: 'READ_FIRST_HIT',   // legge dal primo livello che risponde
+  }),
+});
+```
+
+## Metriche e Osservabilità
+
+La Dispensa espone metriche sul proprio funzionamento attraverso l'interfaccia standard:
+
+```typescript
+const stats = await dispensa.stats();
+// {
+//   hits: 4821,
+//   misses: 143,
+//   hitRate: 0.97,
+//   avgLatencyMs: 1.2,
+//   backend: 'redis',
+//   connectedNodes: 3
+// }
+```
+
+Dal CLI del framework:
+
+```
+pasta> dispensa stats
+  Backend:     Mozzarella Cache (Redis)
+  Hit rate:    97.2%
+  Avg latency: 1.2ms
+  Keys stored: 18,432
+  Memory used: 42.1 MB
+```
+
+La dispensa ben tenuta è la fondamenta invisibile di ogni buon piatto. Non ci pensi quando funziona — la rimpianti solo quando manca.

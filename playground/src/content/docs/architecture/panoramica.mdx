@@ -1,0 +1,77 @@
+---
+title: "Panoramica dell'Architettura"
+description: "Una veduta dall'alto del Vesuvio sull'architettura di Pasta Protocol"
+---
+
+import FeatureCard from '@bogoware/starlight-theme/components/FeatureCard.astro';
+import FeatureGrid from '@bogoware/starlight-theme/components/FeatureGrid.astro';
+
+> *"Chi va piano, va sano e va lontano — ma chi va troppo piano, arriva a friddo."*
+> — Proverbio napoletano
+
+A Pasta Protocol nun è 'na cosa sola. È un sistema di sistemi — come una cucina che funziona a pieno regime durante il pranzo domenicale. Ogni parte ha il suo ruolo preciso, ogni componente conosce il suo posto, e tutto gira insieme con la grazia di chi ha imparato a cucinare per venti persone senza perdere la calma.
+
+## La Filosofia dell'Architettura
+
+Il Pasta Protocol nasce da una domanda semplice: perché i sistemi distribuiti devono essere così difficili da capire? La risposta napoletana è immediata — perché li hanno scritti persone che non hanno mai cucinato.
+
+Una buona cucina napoletana insegna più di qualsiasi libro di architettura software. Hai il **forno** che lavora instancabile, la **dispensa** che conserva ogni ingrediente al posto giusto, e **'a rete** di fornitori e corrieri che porta tutto a destinazione. Metti insieme questi tre elementi e hai un sistema distribuito che funziona.
+
+Il framework si articola attorno a **tre sottosistemi fondamentali**, ciascuno ispirato a una componente essenziale della cucina tradizionale partenopea:
+
+<FeatureGrid columns={3}>
+  <FeatureCard
+    icon="🔥"
+    title="'O Forno — I Nodi"
+    description="Il cuore pulsante del cluster. I nodi del Pasta Protocol si organizzano in ruoli precisi: Pizzaiolo (worker), Capocuoco (coordinator) e Lavapiatti (cleaner). Ogni forno conosce il suo mestiere."
+    href="/starlight-theme/architecture/o-forno/"
+  />
+  <FeatureCard
+    icon="🧺"
+    title="La Dispensa — Lo Storage"
+    description="Ogni ingrediente al suo posto. Il layer di storage del Pasta Protocol supporta backend multipli con semantica consistente: dalla RAM velocissima alla cantina PostgreSQL, passando per la mozzarella cache Redis."
+    href="/starlight-theme/architecture/la-dispensa/"
+  />
+  <FeatureCard
+    icon="🛵"
+    title="'A Rete — Il Networking"
+    description="I messaggi viaggiano come i motorini di Napoli: veloci, furbi e sempre a destinazione. HTTP Corriere, gRPC Motorino e UDP Piccione Viaggiatore coprono ogni scenario di comunicazione."
+    href="/starlight-theme/architecture/a-rete/"
+  />
+</FeatureGrid>
+
+## Come Comunicano i Sottosistemi
+
+Il flusso tipico di una richiesta nel Pasta Protocol segue il cammino naturale della cucina:
+
+1. Una richiesta arriva dall'esterno attraverso **'A Rete** — il layer di networking riceve il messaggio e lo instrada al nodo competente.
+2. Il nodo — che sia un Pizzaiolo worker o un Capocuoco coordinator — lo elabora tramite **'O Forno**, applicando la logica di business, la gestione degli errori e il ciclo di vita della transazione.
+3. Ogni stato rilevante viene persistito in **La Dispensa**, il layer di storage, garantendo durabilità e coerenza tra i nodi del cluster.
+
+Questo triangolo virtuoso — rete, elaborazione, persistenza — è ciò che rende il Pasta Protocol robusto come il calcestruzzo di Ercolano e flessibile come la pasta fresca appena tirata.
+
+## Livelli di Errore
+
+Il Pasta Protocol adotta una classificazione degli errori ispirata alla cucina e alla geologia campana:
+
+| Livello       | Codice interno | Significato                                               |
+|---------------|----------------|-----------------------------------------------------------|
+| `BRUSCHETTA`  | 400            | Errore dell'utente — ingrediente sbagliato, ricetta mia   |
+| `PEPERONCINO` | 422            | Input semanticamente errato — piccante ma gestibile        |
+| `VESUVIO`     | 500            | Errore interno — il forno ha preso fuoco                   |
+| `TERREMOTO`   | 503            | Cluster irraggiungibile — tutta la cucina è per terra      |
+
+## Livelli di Log
+
+| Livello    | Equivalente | Quando usarlo                                  |
+|------------|-------------|------------------------------------------------|
+| `SUSSURRO` | DEBUG       | Dettagli minuziosi, solo in sviluppo           |
+| `VOCE`     | INFO        | Operazioni normali, flusso standard            |
+| `GRIDO`    | WARN        | Qualcosa non va ma il servizio regge           |
+| `URLO`     | ERROR       | Errore grave, intervento immediato necessario  |
+
+## Il Segreto del Sistema
+
+Come nella cucina tradizionale, il segreto non è nella complessità — è nel rispetto dei tempi e dei ruoli. Il Pasta Protocol non cerca di fare tutto in un posto solo. Ogni sottosistema fa una cosa e la fa bene. 'A pasta nun aspetta a nisciuno, e nemmeno il tuo cluster.
+
+Nelle sezioni che seguono esplorerai ciascun sottosistema nel dettaglio. Tieni 'o cafè caldo — ce ne vuole.

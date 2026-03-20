@@ -1,0 +1,200 @@
+---
+title: "'O Ragù — Saga Orchestration"
+description: "Orchestrazione di transazioni distribuite a lunga cottura, come il ragù della nonna."
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components';
+
+> *"'O ragù nun perdona chi ha fretta."*
+> — Proverbio della cucina partenopea
+
+Esistono problemi che non si risolvono in un attimo. Transazioni distribuite che coinvolgono più servizi, più nodi, più risorse — ognuna con il proprio ritmo, i propri fallimenti, le proprie compensazioni. Sono i problemi che richiedono il trattamento del ragù: fuoco basso, pazienza, e la certezza che alla fine il risultato ripaga ogni attesa.
+
+**'O Ragù** è il modulo di saga orchestration del Pasta Protocol. Implementa il pattern **Saga** con compensazioni automatiche, checkpointing distribuito e resilienza integrata. Ogni saga è una ricetta a lunga cottura — e come il ragù della nonna, non si improvvisa.
+
+<Aside type="caution">
+**Mai affrettare un ragù. Mai affrettare una saga.**
+
+Le saghe del Pasta Protocol sono progettate per durare ore, non millisecondi. Resistere alla tentazione di impostare timeout brevi. Una saga interrotta a metà è peggio di una saga mai iniziata: lascia dati inconsistenti sparsi tra i servizi, come un ragù rovesciato sul pavimento — difficile da raccogliere, impossibile da servire.
+
+Configura sempre le compensazioni *prima* di avviare una saga. Non esiste ragù senza pentola di riserva.
+</Aside>
+
+## Cos'è una Saga
+
+Una saga è una sequenza di transazioni locali, ciascuna eseguita su un singolo servizio o nodo. Se una transazione fallisce, la saga non tenta un rollback globale — esegue invece le **compensazioni**: operazioni inverse progettate per annullare semanticamente il lavoro già fatto.
+
+```typescript
+interface Saga<TInput, TOutput> {
+  readonly id: string;
+  readonly name: string;
+  readonly steps: ReadonlyArray<SagaStep>;
+  readonly compensations: ReadonlyArray<SagaCompensation>;
+  readonly timeoutCotture: number;
+  execute(input: TInput): Promise<SagaResult<TOutput>>;
+  resume(sagaId: string): Promise<SagaResult<TOutput>>;
+  compensate(sagaId: string): Promise<CompensationResult>;
+}
+
+interface SagaStep {
+  readonly name: string;
+  readonly service: string;
+  readonly operation: string;
+  readonly retryPolicy: RetryPolicy;
+  readonly timeoutCotture: number;
+}
+
+interface SagaCompensation {
+  readonly forStep: string;
+  readonly service: string;
+  readonly operation: string;
+  readonly idempotencyKey: (sagaId: string) => string;
+}
+```
+
+## Il Ciclo di Vita di una Saga
+
+Ogni saga attraversa un ciclo di vita rigoroso, scandito come i passi di una ricetta collaudata.
+
+<Steps>
+
+1. **Prepara gli ingredienti**
+
+   Prima di avviare la saga, il sistema valida l'input, verifica la disponibilità dei servizi coinvolti e crea il record di saga nella Dispensa con stato `PREPARAZIONE`. Ogni step riceve un ID idempotente che garantisce che — in caso di retry — la stessa operazione non venga eseguita due volte.
+
+   ```typescript
+   const saga = await ragu.prepare({
+     name: 'ordine-completo',
+     input: { clienteId: '42', piatti: ['margherita', 'calzone'], tavolo: 7 },
+     timeoutCotture: 24,  // 12 ore al massimo
+   });
+   // saga.id = 'saga_ord_20240315_007'
+   // saga.status = 'PREPARAZIONE'
+   ```
+
+2. **Inizia la cottura**
+
+   La saga entra in stato `IN_COTTURA` e il Capocuoco assegna l'esecuzione a un nodo Pizzaiolo dedicato. Gli step vengono eseguiti in sequenza, con retry automatico su errori transienti. Ogni step completato viene marcato nella Dispensa come checkpoint — se il nodo cade, la saga può riprendere dall'ultimo checkpoint.
+
+   ```typescript
+   const esecuzione = await saga.start();
+   // Esegue in sequenza:
+   // Step 1: verifica-disponibilita-ingredienti → OK
+   // Step 2: blocca-tavolo → OK
+   // Step 3: invia-ordine-a-cucina → OK (checkpoint)
+   ```
+
+3. **Monitora la temperatura**
+
+   Durante l'esecuzione, la saga emette eventi di monitoraggio a ogni step. Puoi sottoscrivere questi eventi tramite GarlicBreadcast per tenere traccia del progresso, inviare notifiche o aggiornare l'UI in tempo reale.
+
+   ```typescript
+   ragu.on('step:completed', (event: SagaStepEvent) => {
+     logger.voce(`Saga ${event.sagaId}: step "${event.stepName}" completato`, {
+       duration: event.durationMs,
+       checkpoint: event.checkpointId,
+     });
+   });
+
+   ragu.on('step:failed', (event: SagaStepEvent) => {
+     logger.grido(`Saga ${event.sagaId}: step "${event.stepName}" fallito`, {
+       error: event.error,
+       attemptNumber: event.attempt,
+       willRetry: event.willRetry,
+     });
+   });
+   ```
+
+4. **Servi quando è pronto**
+
+   Una saga completa con successo entra in stato `SERVITA`. Se un qualsiasi step fallisce definitivamente (esauriti i retry), la saga entra in stato `COMPENSAZIONE` e avvia l'esecuzione inversa degli step completati. Una saga completamente compensata entra in stato `RIMANDATO_IN_CUCINA`.
+
+   ```typescript
+   const risultato = await saga.awaitCompletion();
+
+   if (risultato.status === 'SERVITA') {
+     const ordineId = risultato.output.ordineId;
+     // Tutto perfetto, il piatto è pronto.
+   } else if (risultato.status === 'RIMANDATO_IN_CUCINA') {
+     // La saga è stata compensata. Tutti i servizi sono tornati allo stato iniziale.
+     const motivo = risultato.compensationReason;
+     throw new SagaError('VESUVIO', `Saga fallita e compensata: ${motivo}`);
+   }
+   ```
+
+</Steps>
+
+## Definire una Saga
+
+Il Pasta Protocol offre un builder fluente per definire le saghe:
+
+```typescript
+import { SagaBuilder } from '@pasta-protocol/ragu';
+
+const ordineSaga = new SagaBuilder('ordine-completo')
+  .timeout(24)  // cotture massime
+  .step('verifica-magazzino')
+    .calls('magazzino-service', 'verificaDisponibilita')
+    .compensateWith('magazzino-service', 'rilasciaRiserva')
+    .retries(3)
+    .timeoutCotture(2)
+  .step('crea-ordine')
+    .calls('ordini-service', 'creaOrdine')
+    .compensateWith('ordini-service', 'annullaOrdine')
+    .retries(1)
+    .timeoutCotture(1)
+  .step('addebita-pagamento')
+    .calls('pagamenti-service', 'addebita')
+    .compensateWith('pagamenti-service', 'rimborsa')
+    .retries(2)
+    .timeoutCotture(3)
+  .step('notifica-cliente')
+    .calls('notifiche-service', 'invia')
+    .noCompensation()   // le notifiche non si annullano
+    .retries(5)
+    .timeoutCotture(1)
+  .build();
+```
+
+## Stati della Saga
+
+| Stato                  | Descrizione                                              |
+|------------------------|----------------------------------------------------------|
+| `PREPARAZIONE`         | Saga creata, input validato, non ancora avviata          |
+| `IN_COTTURA`           | Esecuzione degli step in corso                           |
+| `IN_PAUSA`             | Saga in attesa di un evento esterno o approvazione umana |
+| `COMPENSAZIONE`        | Uno step ha fallito, compensazioni in esecuzione         |
+| `SERVITA`             | Tutti gli step completati con successo                   |
+| `RIMANDATO_IN_CUCINA` | Saga compensata con successo dopo un fallimento          |
+| `BRUCIATA`            | Compensazione fallita — intervento manuale necessario    |
+
+## Il Dead Letter Fornello
+
+Quando una saga entra in stato `BRUCIATA` — fallimento sia dell'esecuzione che della compensazione — il Pasta Protocol la invia al **Dead Letter Fornello**, una coda speciale per intervento manuale:
+
+```typescript
+ragu.onBurned(async (sagaBruciata: BurnedSaga) => {
+  await alertingService.urgente({
+    livello: 'TERREMOTO',
+    messaggio: `Saga ${sagaBruciata.id} bruciata — intervento manuale`,
+    stepFallito: sagaBruciata.failedStep,
+    compensazioniFallite: sagaBruciata.failedCompensations,
+  });
+});
+```
+
+Dal CLI:
+
+```
+pasta> saga list --status BRUCIATA
+  saga_ord_20240315_003  ordine-completo  BRUCIATA  (step: addebita-pagamento)
+  saga_ord_20240315_009  ordine-completo  BRUCIATA  (comp: rimborsa)
+
+pasta> saga inspect saga_ord_20240315_003
+  [...]
+
+pasta> saga compensate-manual saga_ord_20240315_003
+  Avvio compensazione manuale...
+```
+
+Come il ragù, una saga ben scritta richiede tempo, attenzione e rispetto dei passaggi. Ma una volta pronta, nutre il sistema per ore — robusta, affidabile, e impossibile da affrettare.
