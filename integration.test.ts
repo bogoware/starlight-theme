@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const playgroundDir = resolve(__dirname, 'playground');
 const distDir = resolve(playgroundDir, 'dist');
+const siteBase = 'starlight-theme';
 
 /** Read all CSS files from the dist/_astro directory and concatenate them. */
 function readDistCss(): string {
@@ -16,6 +17,13 @@ function readDistCss(): string {
   return cssFiles
     .map((f) => readFileSync(resolve(astroDir, f), 'utf-8'))
     .join('\n');
+}
+
+/** Read an HTML page from the dist directory. */
+function readDistHtml(pagePath: string): string {
+  const htmlPath = resolve(distDir, siteBase, pagePath, 'index.html');
+  if (!existsSync(htmlPath)) return '';
+  return readFileSync(htmlPath, 'utf-8');
 }
 
 describe('integration: playground site build', () => {
@@ -34,7 +42,6 @@ describe('integration: playground site build', () => {
 
   it('should contain Bogoware brand tokens in CSS', () => {
     const css = readDistCss();
-    // The base.css tokens should be bundled into the output CSS
     expect(css).toContain('bw-indigo');
   });
 
@@ -60,11 +67,29 @@ describe('integration: playground site build', () => {
   });
 });
 
-describe('integration: architect mode typography', () => {
-  it('playground uses architect mode by default', () => {
-    // The schema defaults to 'architect' mode when no mode is specified.
-    // Verify the built CSS contains architect-specific font references.
+describe('integration: dual typography', () => {
+  it('built CSS should contain both Architect and Florentine font names', () => {
     const css = readDistCss();
     expect(css).toContain('Space Grotesk');
+    expect(css).toContain('Cormorant Garamond');
+  });
+
+  it('built CSS should contain data-bw-style scoping', () => {
+    const css = readDistCss();
+    expect(css).toContain('data-bw-style');
+  });
+
+  it('architecture page should use architect style', () => {
+    const html = readDistHtml('architecture/panoramica');
+    if (html) {
+      expect(html).toContain('data-bw-style="architect"');
+    }
+  });
+
+  it('blog page should use florentine style via route matching', () => {
+    const html = readDistHtml('blog/chi-sono');
+    if (html) {
+      expect(html).toContain('data-bw-style="florentine"');
+    }
   });
 });

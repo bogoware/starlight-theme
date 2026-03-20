@@ -3,73 +3,16 @@
  *
  * Geometric sans-serif type system built on Space Grotesk (headings),
  * DM Sans (body), and Space Mono (code). Clean, technical, precise.
+ *
+ * All rules are scoped under [data-bw-style="architect"] so that
+ * Architect and Florentine modes can coexist on the same page.
+ * Font registrations live in fonts.css (always loaded).
  */
 
 /* ============================================================
- * @font-face declarations
+ * Typography tokens
  * ============================================================ */
-
-/* Space Grotesk — Headings (700, 800)
- * Served from Google Fonts CDN. local() is tried first for users
- * who have the font installed. The ../assets/fonts/ woff2 files are
- * kept in the package for offline/bundled use but are NOT referenced
- * here — Vite cannot resolve paths from node_modules at build time. */
-@font-face {
-  font-family: 'Space Grotesk';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src:
-    local('Space Grotesk Bold'),
-    url('https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVnskPMBBSSJLm2E.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'Space Grotesk';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src:
-    local('Space Grotesk ExtraBold'),
-    url('https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVnskPMBBSSJLm2E.woff2') format('woff2');
-}
-
-/* DM Sans — Body (400, 500) */
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    local('DM Sans Regular'),
-    url('https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K6z9mXg.woff2') format('woff2');
-}
-
-@font-face {
-  font-family: 'DM Sans';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src:
-    local('DM Sans Medium'),
-    url('https://fonts.gstatic.com/s/dmsans/v17/rP2Yp2ywxg089UriI5-g4vlH9VoD8Cmcqbu0-K6z9mXg.woff2') format('woff2');
-}
-
-/* Space Mono — Code (400) */
-@font-face {
-  font-family: 'Space Mono';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    local('Space Mono Regular'),
-    url('https://fonts.gstatic.com/s/spacemono/v13/i7dPIFZifjKcF5UAWdDRYEF8RQ.woff2') format('woff2');
-}
-
-/* ============================================================
- * :root — Typography tokens
- * ============================================================ */
-:root {
+[data-bw-style="architect"] {
   /* Font family tokens */
   --bw-font-heading: 'Space Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --bw-font-body: 'DM Sans', ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -97,39 +40,8 @@
   /* Starlight integration */
   --sl-font: var(--bw-font-body);
   --sl-font-mono: var(--bw-font-code);
-}
 
-/* ============================================================
- * Heading styles
- * ============================================================ */
-h1 {
-  font-family: var(--bw-font-heading);
-  font-weight: 800;
-  font-size: var(--bw-text-display);
-  line-height: var(--bw-leading-tight);
-  letter-spacing: var(--bw-tracking-tight);
-}
-
-h2 {
-  font-family: var(--bw-font-heading);
-  font-weight: 700;
-  font-size: var(--bw-text-h2);
-  line-height: var(--bw-leading-tight);
-  letter-spacing: var(--bw-tracking-tight);
-}
-
-h3 {
-  font-family: var(--bw-font-heading);
-  font-weight: 700;
-  font-size: var(--bw-text-h3);
-  line-height: var(--bw-leading-tight);
-  letter-spacing: var(--bw-tracking-normal);
-}
-
-/* ============================================================
- * Body styles
- * ============================================================ */
-body {
+  /* Inherited body styles */
   font-family: var(--bw-font-body);
   font-weight: 400;
   font-size: var(--bw-text-body);
@@ -138,12 +50,36 @@ body {
 }
 
 /* ============================================================
+ * Heading styles
+ * ============================================================ */
+[data-bw-style="architect"] h1 {
+  font-family: var(--bw-font-heading);
+  font-weight: 800;
+  font-size: var(--bw-text-display);
+  line-height: var(--bw-leading-tight);
+  letter-spacing: var(--bw-tracking-tight);
+}
+
+[data-bw-style="architect"] h2 {
+  font-family: var(--bw-font-heading);
+  font-weight: 700;
+  font-size: var(--bw-text-h2);
+  line-height: var(--bw-leading-tight);
+  letter-spacing: var(--bw-tracking-tight);
+}
+
+[data-bw-style="architect"] h3 {
+  font-family: var(--bw-font-heading);
+  font-weight: 700;
+  font-size: var(--bw-text-h3);
+  line-height: var(--bw-leading-tight);
+  letter-spacing: var(--bw-tracking-normal);
+}
+
+/* ============================================================
  * Code styles
  * ============================================================ */
-code,
-pre,
-kbd,
-samp {
+[data-bw-style="architect"] :is(code, pre, kbd, samp) {
   font-family: var(--bw-font-code);
   font-size: var(--bw-text-code);
   line-height: var(--bw-leading-relaxed);
@@ -152,15 +88,14 @@ samp {
 /* ============================================================
  * Caption and small text styles
  * ============================================================ */
-.caption,
-figcaption {
+[data-bw-style="architect"] :is(.caption, figcaption) {
   font-family: var(--bw-font-body);
   font-size: var(--bw-text-caption);
   line-height: var(--bw-leading-normal);
   color: var(--bw-text-muted);
 }
 
-small {
+[data-bw-style="architect"] small {
   font-size: var(--bw-text-small);
   line-height: var(--bw-leading-normal);
 }

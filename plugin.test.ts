@@ -19,6 +19,16 @@ describe('bogowareTheme plugin', () => {
     expect(plugin.name).toBe('@bogoware/starlight-theme');
   });
 
+  it('should accept styleRoutes config', () => {
+    const plugin = bogowareTheme({
+      mode: 'architect',
+      styleRoutes: [
+        { pattern: 'blog/**', style: 'florentine' },
+      ],
+    });
+    expect(plugin.name).toBe('@bogoware/starlight-theme');
+  });
+
   it('should throw on invalid config', () => {
     // @ts-expect-error — intentionally passing invalid config
     expect(() => bogowareTheme({ mode: 'gothic' })).toThrow();

@@ -7,28 +7,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const florentineCss = readFileSync(resolve(__dirname, '..', 'florentine.css'), 'utf-8');
 
 describe('florentine.css', () => {
-  it('should define Cormorant Garamond font-face for headings', () => {
-    expect(florentineCss).toContain("font-family: 'Cormorant Garamond'");
+  it('should scope rules under [data-bw-style="florentine"]', () => {
+    expect(florentineCss).toContain('[data-bw-style="florentine"]');
   });
 
-  it('should define Crimson Pro font-face for body text', () => {
-    expect(florentineCss).toContain("font-family: 'Crimson Pro'");
-  });
-
-  it('should define Fira Code font-face for code', () => {
-    expect(florentineCss).toContain("font-family: 'Fira Code'");
-  });
-
-  it('should include italic variant for Crimson Pro', () => {
-    expect(florentineCss).toContain('font-style: italic');
-  });
-
-  it('should use font-display: swap for all font-faces', () => {
-    expect(florentineCss).toContain('font-display: swap');
-  });
-
-  it('should reference woff2 font files', () => {
-    expect(florentineCss).toContain('.woff2');
+  it('should NOT contain @font-face declarations (moved to fonts.css)', () => {
+    expect(florentineCss).not.toContain('@font-face');
   });
 
   it('should define heading font token', () => {
@@ -50,5 +34,15 @@ describe('florentine.css', () => {
   it('should map to Starlight font variables', () => {
     expect(florentineCss).toContain('--sl-font: var(--bw-font-body)');
     expect(florentineCss).toContain('--sl-font-mono: var(--bw-font-code)');
+  });
+
+  it('should scope heading styles under data-bw-style', () => {
+    expect(florentineCss).toContain('[data-bw-style="florentine"] h1');
+    expect(florentineCss).toContain('[data-bw-style="florentine"] h2');
+    expect(florentineCss).toContain('[data-bw-style="florentine"] h3');
+  });
+
+  it('should include blockquote styles', () => {
+    expect(florentineCss).toContain('[data-bw-style="florentine"] blockquote');
   });
 });
