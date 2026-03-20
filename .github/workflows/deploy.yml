@@ -3,6 +3,19 @@ name: Deploy Playground
 on:
   push:
     branches: [main]
+    paths:
+      - 'index.ts'
+      - 'schema.ts'
+      - 'virtual.d.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'styles/**'
+      - 'components/**'
+      - 'overrides/**'
+      - 'lib/**'
+      - 'assets/**'
+      - 'playground/**'
+  workflow_dispatch:
 
 permissions:
   contents: read

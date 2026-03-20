@@ -28,10 +28,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install playground dependencies
-        run: pnpm install --frozen-lockfile
-        working-directory: playground
-
       - name: Run tests
         run: pnpm test
 
