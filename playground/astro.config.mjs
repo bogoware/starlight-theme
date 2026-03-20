@@ -3,8 +3,8 @@ import starlight from '@astrojs/starlight';
 import bogowareTheme from '@bogoware/starlight-theme';
 
 export default defineConfig({
-  site: 'https://example.com',
-  base: '/',
+  site: 'https://bogoware.github.io',
+  base: '/starlight-theme',
   integrations: [
     starlight({
       title: 'Theme Playground',

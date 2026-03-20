@@ -67,10 +67,13 @@
   --bw-text: #e2e8f0;
   --bw-text-muted: #94a3b8;
 
-  /* Starlight integration */
-  --sl-color-accent-low: #1e1b4b;
+  /* Starlight integration
+   * accent-low  = active sidebar item background (needs to be subtle)
+   * accent      = links, active item border
+   * accent-high = text ON accent backgrounds (needs high contrast) */
+  --sl-color-accent-low: #1e293b;
   --sl-color-accent: var(--bw-indigo);
-  --sl-color-accent-high: var(--bw-periwinkle);
+  --sl-color-accent-high: #e0e7ff;
   --sl-color-bg-nav: var(--bw-surface);
   --sl-color-bg-sidebar: var(--bw-bg);
 }
@@ -90,10 +93,13 @@
   --bw-violet-deep: #7c3aed;
   --bw-cyan-deep: #06b6d4;
 
-  /* Starlight integration */
+  /* Starlight integration
+   * accent-low  = active sidebar item background (subtle tint)
+   * accent      = links, active item border
+   * accent-high = text ON accent backgrounds (needs high contrast) */
   --sl-color-accent-low: #eef2ff;
   --sl-color-accent: var(--bw-indigo-deep);
-  --sl-color-accent-high: #312e81;
+  --sl-color-accent-high: #1e1b4b;
   --sl-color-bg-nav: var(--bw-surface);
   --sl-color-bg-sidebar: var(--bw-bg);
 }
