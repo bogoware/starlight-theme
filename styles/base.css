@@ -119,17 +119,34 @@
 }
 
 /* ============================================================
- * Content layout — left-aligned against sidebar edge
- * Starlight default centers content with auto margins, leaving
- * an awkward gap between the sidebar and the text. Override to
- * push content flush-left with a comfortable max-width.
+ * Content layout — left-aligned, TOC flush after content
+ * Starlight pins the TOC to the right viewport edge, leaving
+ * a huge gap. Override: content + TOC flow together as a pair,
+ * left-aligned against the sidebar.
  * ============================================================ */
-.main-pane {
-  --sl-content-width: 50rem;
+[data-has-sidebar][data-has-toc] .main-pane,
+[data-has-sidebar]:not([data-has-toc]) .main-pane {
+  --sl-content-margin-inline: 0 !important;
 }
 
-.content-panel {
-  margin-inline-start: 0;
+@media (min-width: 72rem) {
+  /* Make the main content + TOC row a simple flex with no extra space */
+  .lg\:sl-flex {
+    justify-content: flex-start !important;
+  }
+
+  /* Content pane: shrink to content width, don't stretch */
+  [data-has-sidebar][data-has-toc] .main-pane {
+    width: auto !important;
+    max-width: calc(var(--sl-content-width) * 1.3 + 2 * var(--sl-content-pad-x, 1rem));
+    flex: 0 1 auto;
+  }
+
+  /* TOC: sit immediately after content, fixed width */
+  .right-sidebar-container {
+    width: var(--sl-sidebar-width) !important;
+    flex: 0 0 auto;
+  }
 }
 
 /* ============================================================
