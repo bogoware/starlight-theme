@@ -11,6 +11,10 @@ Bogoware brand identity theme for [Astro Starlight](https://starlight.astro.buil
 - **Sitemap**: Automatic sitemap generation via @astrojs/sitemap
 - **Self-hosted fonts**: WOFF2 font files for offline/air-gapped builds
 
+## Live Demo
+
+Explore the theme in action at **[Pasta Protocol](https://bogoware.github.io/starlight-theme/)** — a fictional Neapolitan-flavored distributed systems framework that showcases every feature of the Bogoware Starlight theme, including both typography modes, all custom components, and the complete Starlight component catalog.
+
 ## Installation
 
 ```bash
