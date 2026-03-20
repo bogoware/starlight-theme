@@ -1,0 +1,315 @@
+---
+title: Theme Guide
+description: How to install and configure @bogoware/starlight-theme for your Astro Starlight documentation site.
+---
+
+import { Tabs, TabItem, Steps, Card, CardGrid, Aside } from '@astrojs/starlight/components';
+
+This guide covers the installation, configuration, and usage of `@bogoware/starlight-theme` — a Starlight plugin that provides a dual typography system, brand identity, SEO enhancements, and custom components.
+
+## Installation
+
+<Tabs>
+  <TabItem label="pnpm">
+    ```bash
+    pnpm add @bogoware/starlight-theme
+    ```
+  </TabItem>
+  <TabItem label="npm">
+    ```bash
+    npm install @bogoware/starlight-theme
+    ```
+  </TabItem>
+  <TabItem label="yarn">
+    ```bash
+    yarn add @bogoware/starlight-theme
+    ```
+  </TabItem>
+</Tabs>
+
+## Basic Setup
+
+Add the plugin to your `astro.config.mjs`:
+
+```javascript title="astro.config.mjs"
+import { defineConfig } from 'astro/config';
+import starlight from '@astrojs/starlight';
+import bogowareTheme from '@bogoware/starlight-theme';
+
+export default defineConfig({
+  integrations: [
+    starlight({
+      title: 'My Project',
+      plugins: [
+        bogowareTheme({
+          mode: 'architect',
+          logoVariant: 'simplified',
+          fieldLines: true,
+        }),
+      ],
+    }),
+  ],
+});
+```
+
+The plugin automatically loads all CSS, registers component overrides, and sets up a virtual module for theme configuration. No additional imports are needed.
+
+## Configuration Reference
+
+The full configuration schema with defaults:
+
+```javascript
+bogowareTheme({
+  // Typography mode applied site-wide
+  mode: 'architect',              // 'architect' | 'florentine'
+
+  // Override typography for specific URL patterns
+  styleRoutes: [],                // Array<{ pattern: string, style: 'architect' | 'florentine' }>
+
+  // Logo variant used in component overrides
+  logoVariant: 'simplified',      // 'full' | 'simplified' | 'monochrome'
+
+  // Optional accent color override
+  accentColor: undefined,         // CSS color string
+
+  // Decorative field lines in the background
+  fieldLines: true,               // boolean
+
+  // SEO settings
+  seo: {
+    siteName: 'Bogoware',
+    defaultDescription: '',
+    locale: 'en_US',
+    ogImage: {
+      enabled: true,
+      strategy: 'dynamic',       // 'dynamic' | 'static'
+    },
+    twitterCard: 'summary_large_image',  // 'summary' | 'summary_large_image'
+    twitterSite: undefined,       // e.g. '@bogoware'
+    structuredData: {
+      type: 'SoftwareSourceCode', // 'SoftwareSourceCode' | 'Blog' | 'WebSite'
+      author: 'Bogoware',
+    },
+  },
+
+  // Google Analytics
+  analytics: {
+    googleAnalyticsId: undefined, // e.g. 'G-XXXXXXXXXX'
+    respectDnt: true,             // honour Do Not Track
+    cookieless: false,            // no client storage, anonymized IP
+  },
+})
+```
+
+## Typography Modes
+
+The theme ships two complete typographic systems that coexist on the same site:
+
+| Mode | Display | Body | Code | Best For |
+|------|---------|------|------|----------|
+| **Architect** | Space Grotesk | DM Sans | Space Mono | Technical docs, API references |
+| **Florentine** | Cormorant Garamond | Crimson Pro | Fira Code | Blogs, essays, literary content |
+
+Both CSS files are always loaded. The active mode is determined by a `data-bw-style` attribute — no conditional imports, no layout shift.
+
+## Style Resolution
+
+The theme resolves the typography style for each page in this priority order:
+
+<Steps>
+
+1. **Frontmatter** — `themeStyle` field on the individual page (highest priority)
+
+2. **Route patterns** — `styleRoutes` entries in the plugin configuration
+
+3. **Global default** — the `mode` setting (lowest priority)
+
+</Steps>
+
+### Route-Based Styles
+
+Assign a typography mode to entire URL subtrees:
+
+```javascript
+bogowareTheme({
+  mode: 'architect',
+  styleRoutes: [
+    { pattern: 'blog/**', style: 'florentine' },     // recursive match
+    { pattern: 'philosophy/*', style: 'florentine' }, // single level only
+    { pattern: 'about', style: 'florentine' },        // exact match
+  ],
+})
+```
+
+**Supported patterns:**
+- `blog/**` — matches any depth: `blog/foo`, `blog/foo/bar`, etc.
+- `blog/*` — matches one level only: `blog/foo` but not `blog/foo/bar`
+- `blog/my-post` — exact match
+
+### Per-Page Override
+
+Override the style for a specific page via frontmatter:
+
+```markdown
+---
+title: My Literary Post
+themeStyle: 'florentine'
+---
+
+This page uses Florentine typography regardless of route patterns.
+```
+
+To enable the `themeStyle` frontmatter field, extend Starlight's content schema:
+
+```typescript title="src/content.config.ts"
+import { defineCollection } from 'astro:content';
+import { docsSchema } from '@astrojs/starlight/schema';
+import { themeStyleSchema } from '@bogoware/starlight-theme/schema';
+
+export const collections = {
+  docs: defineCollection({
+    schema: docsSchema({ extend: themeStyleSchema }),
+  }),
+};
+```
+
+### Inline Style Switching
+
+Switch typography within a page using the `<Style>` component:
+
+```mdx
+import Style from '@bogoware/starlight-theme/components/Style.astro';
+
+This paragraph uses the page's default style.
+
+<Style mode="florentine">
+
+This section uses Florentine typography — classical serif fonts
+for a literary feel within a technical page.
+
+</Style>
+
+Back to the page's default style.
+```
+
+## Custom Components
+
+### FeatureCard
+
+A card with an animated left border on hover. Renders as a link when `href` is provided.
+
+```mdx
+import FeatureCard from '@bogoware/starlight-theme/components/FeatureCard.astro';
+
+<FeatureCard
+  icon="🚀"
+  title="Fast Consensus"
+  description="Sub-millisecond agreement on local clusters."
+  href="/docs/consensus/"
+/>
+```
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `title` | `string` | Yes | Card heading |
+| `description` | `string` | Yes | Card body text |
+| `icon` | `string` | No | Emoji or text icon |
+| `href` | `string` | No | Turns the card into a link |
+
+### FeatureGrid
+
+A responsive grid container for `FeatureCard` components.
+
+```mdx
+import FeatureCard from '@bogoware/starlight-theme/components/FeatureCard.astro';
+import FeatureGrid from '@bogoware/starlight-theme/components/FeatureGrid.astro';
+
+<FeatureGrid columns={3}>
+  <FeatureCard title="One" description="First card." />
+  <FeatureCard title="Two" description="Second card." />
+  <FeatureCard title="Three" description="Third card." />
+</FeatureGrid>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `columns` | `2 \| 3 \| 4` | `3` | Number of columns (collapses to 1 on mobile) |
+
+### BogowareLogo
+
+Renders the Bogoliubov Vertex logo mark as inline SVG.
+
+```mdx
+import BogowareLogo from '@bogoware/starlight-theme/components/BogowareLogo.astro';
+
+<BogowareLogo variant="simplified" size={64} />
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `'full' \| 'simplified' \| 'monochrome'` | `'full'` | Logo style — full includes field lines, simplified is cleaner, monochrome is single-color |
+| `size` | `number \| string` | `32` | Width and height in pixels |
+| `class` | `string` | `''` | Additional CSS class |
+
+### Style
+
+Inline typography mode switch for MDX content. See [Inline Style Switching](#inline-style-switching) above.
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `mode` | `'architect' \| 'florentine'` | Yes | Typography mode for the wrapped content |
+
+## SEO
+
+The theme automatically injects:
+
+- **Font preconnect** hints for Google Fonts CDN
+- **Favicon** with SVG, ICO, and Apple Touch Icon variants
+- **Open Graph** meta tags (`og:title`, `og:description`, `og:image`, `og:site_name`)
+- **Structured data** (JSON-LD) based on the `structuredData.type` setting
+- **Sitemap** generation via `@astrojs/sitemap` (auto-installed if not present)
+
+Configure these through the `seo` option:
+
+```javascript
+seo: {
+  siteName: 'My Project',
+  defaultDescription: 'A great project.',
+  locale: 'en_US',
+  ogImage: { enabled: true, strategy: 'dynamic' },
+  twitterCard: 'summary_large_image',
+  twitterSite: '@myproject',
+  structuredData: { type: 'SoftwareSourceCode', author: 'My Name' },
+}
+```
+
+## Analytics
+
+Optional Google Analytics 4 integration with privacy controls:
+
+```javascript
+analytics: {
+  googleAnalyticsId: 'G-XXXXXXXXXX',
+  respectDnt: true,   // skip tracking when Do Not Track is enabled
+  cookieless: false,   // when true: no client storage, anonymized IP
+}
+```
+
+<Aside type="note">
+When `respectDnt` is `true` (the default), the GA script is not loaded at all for visitors who have enabled Do Not Track in their browser. When `cookieless` is `true`, GA runs with `client_storage: 'none'` and `anonymize_ip: true`.
+</Aside>
+
+## Component Overrides
+
+The plugin automatically overrides these Starlight components:
+
+| Component | What it does |
+|-----------|-------------|
+| `Header` | Adds `data-bw-style` attribute and gradient bottom border |
+| `Hero` | Custom hero section with quantum field animations |
+| `Sidebar` | Brand-styled sidebar |
+| `Footer` | Custom footer with Bogoware branding |
+| `Head` | Injects SEO meta, font preconnect, favicon links |
+| `MarkdownContent` | Resolves and applies the typography mode per page |
+
+These overrides are registered automatically — you do not need to configure them manually in your Starlight `components` option.

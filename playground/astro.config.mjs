@@ -29,6 +29,11 @@ export default defineConfig({
       ],
       sidebar: [
         {
+          label: 'Theme Guide',
+          slug: 'theme-guide',
+          attrs: { style: 'font-weight: 600' },
+        },
+        {
           label: 'Prima Cottura',
           items: [
             { label: 'Installazione', slug: 'getting-started/installazione' },
