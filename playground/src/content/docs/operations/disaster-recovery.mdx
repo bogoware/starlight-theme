@@ -1,0 +1,175 @@
+---
+title: "Recupero dal Disastro"
+description: "Quando 'o Vesuvio erutta nel tuo cluster: runbook di ripristino per eventi catastrofici"
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+> *"Doppo 'a tempesta vène 'o sole — ma primma bisogna sopravvivere 'a tempesta."*
+> (After the storm comes the sun — but first you have to survive the storm.)
+
+No distributed system is immune to catastrophe. A network partition swallows three nodes whole. A botched deployment corrupts the consensus log. A rogue operator runs `DROP DATABASE` on the wrong kitchen. Pasta Protocol was designed with the Neapolitan spirit of resilience: we have seen Vesuvius erupt, we have rebuilt, and we will rebuild again. This runbook documents how.
+
+<Aside type="danger">
+**Evento VESUVIO o TERREMOTO rilevato.**
+
+A `VESUVIO`-level event means that a majority of your kitchen nodes are unreachable or in an inconsistent state. A `TERREMOTO` means the cluster has halted entirely — no quorum, no writes, no reads, *niente*. Do **not** attempt partial fixes during a TERREMOTO. Follow this runbook from Step 1 without skipping. Improvising during an active Vesuvio-level eruption is how you turn a recoverable outage into a permanent data loss event. *'A pasta scotta nun torna mai al dente.*
+</Aside>
+
+## Classificazione degli Incidenti
+
+Before you open this runbook, confirm the severity of your situation:
+
+| Livello | Codice | Sintomi | Azione |
+|---------|--------|---------|--------|
+| Informational | `BRUSCHETTA` | Single node slow, minor lag | Monitor; no recovery needed |
+| Warning | `PEPERONCINO` | Node unhealthy, quorum intact | Restart failed node, re-join cluster |
+| Critical | `VESUVIO` | Quorum lost, writes rejected | Execute this runbook |
+| Fatal | `TERREMOTO` | Full cluster halt, no reads or writes | Execute this runbook + post-mortem mandatory |
+
+If your incident is `BRUSCHETTA` or `PEPERONCINO`, see [A Pasta Scotta](/starlight-theme/operations/a-pasta-scotta/) instead. This runbook is for `VESUVIO` and `TERREMOTO` events only.
+
+## Runbook di Ripristino
+
+<Steps>
+
+1. **Rileva l'eruzione (Detect the eruption)**
+
+   Confirm that you have a genuine VESUVIO event and not a monitoring false positive. Run the cluster diagnostic:
+
+   ```bash
+   npx pasta cluster:status --verbose
+   # => TERREMOTO: quorum lost — 1/3 nodes responding
+   # => Node vesuvio-01: RESPONDING (leader)
+   # => Node vesuvio-02: UNREACHABLE (timeout after 5000ms)
+   # => Node vesuvio-03: UNREACHABLE (timeout after 5000ms)
+   ```
+
+   Check the `ErrorRegistry` log for the triggering event:
+
+   ```ts
+   import { ErrorRegistry } from '@pasta-protocol/core';
+
+   const registry = ErrorRegistry.getInstance();
+   const recentErrors = registry.getHistory({ severity: ['VESUVIO', 'TERREMOTO'], limit: 20 });
+
+   for (const error of recentErrors) {
+     console.log(`[${error.timestamp}] ${error.code}: ${error.message}`);
+   }
+   ```
+
+   Do not proceed to Step 2 until you have identified the root trigger. Treating the wrong symptom will worsen the eruption.
+
+2. **Evacua il traffico (Evacuate traffic)**
+
+   Immediately redirect all client traffic away from the degraded cluster. If you are running behind a load balancer, switch to the standby kitchen:
+
+   ```bash
+   # Point the load balancer to the standby region
+   npx pasta lb:failover --target standby-kitchen-eu-west --confirm
+
+   # Verify no traffic is reaching the primary cluster
+   npx pasta cluster:connections --kitchen primary-kitchen-eu-central
+   # => Active connections: 0
+   ```
+
+   If you do not have a standby kitchen configured, enable maintenance mode to surface a user-friendly error instead of silent data corruption:
+
+   ```bash
+   npx pasta maintenance:enable --message "La cucina è momentaneamente chiusa. Torniamo presto."
+   ```
+
+   Log the evacuation timestamp — you will need it for the consistency verification in Step 4.
+
+3. **Ripristina dal backup (Restore from backup)**
+
+   Identify the most recent clean snapshot. The `Dispensa` subsystem maintains rolling snapshots every 15 minutes by default:
+
+   ```bash
+   npx pasta backup:list --kitchen primary-kitchen-eu-central
+   # => backup-2025-03-20T14:30:00Z  [CLEAN]  Size: 2.3 GB
+   # => backup-2025-03-20T14:15:00Z  [CLEAN]  Size: 2.3 GB
+   # => backup-2025-03-20T14:00:00Z  [SUSPECT] Size: 2.1 GB  ← do not use
+   ```
+
+   Never restore a `SUSPECT` backup. The `[SUSPECT]` flag means the snapshot was taken during an active write transaction and may contain partial data. Always use the most recent `[CLEAN]` snapshot:
+
+   ```bash
+   npx pasta backup:restore \
+     --snapshot backup-2025-03-20T14:30:00Z \
+     --kitchen primary-kitchen-eu-central \
+     --wipe-current-state \
+     --confirm
+   ```
+
+   This process will take 5–20 minutes depending on snapshot size. The command streams progress to stdout. Do not interrupt it.
+
+4. **Verifica la consistenza (Verify consistency)**
+
+   Once restoration completes, run the consistency checker before allowing any writes. This compares your restored state against the replicated write-ahead log (WAL) from the surviving nodes:
+
+   ```bash
+   npx pasta consistency:check \
+     --since 2025-03-20T14:30:00Z \
+     --kitchen primary-kitchen-eu-central
+   # => Checking 847 operations since snapshot timestamp...
+   # => Replayed: 847  Conflicts: 0  Missing: 0
+   # => Consistency: OK ✓
+   ```
+
+   If the consistency check reports conflicts or missing operations, do **not** resume traffic. Escalate to your data team immediately. A conflict here means the WAL and the snapshot diverged — a rare but serious condition that requires manual reconciliation.
+
+5. **Riprendi la cottura (Resume cooking)**
+
+   With a clean consistency check in hand, bring the cluster back online and restore traffic:
+
+   ```bash
+   # Bring all nodes back into quorum
+   npx pasta cluster:start --kitchen primary-kitchen-eu-central
+
+   # Wait for quorum confirmation
+   npx pasta cluster:await-quorum --timeout 120s
+   # => Quorum achieved: 3/3 nodes healthy
+
+   # Disable maintenance mode
+   npx pasta maintenance:disable
+
+   # Re-enable load balancer routing to the primary kitchen
+   npx pasta lb:failback --target primary-kitchen-eu-central --confirm
+   ```
+
+   Monitor the `Termometro` dashboard closely for the first 30 minutes. Set your alert threshold lower than usual — `PEPERONCINO` events should page on-call during this stabilisation window.
+
+   Document the incident in your post-mortem log. A TERREMOTO event without a post-mortem is a TERREMOTO waiting to happen again.
+
+</Steps>
+
+## Prevenzione
+
+The best disaster recovery is the one you never need to run. Pasta Protocol ships with built-in safeguards that significantly reduce the blast radius of any eruption:
+
+**Backup automatici** — configure your `.ricetta` file to take snapshots every 5 minutes in high-criticality kitchens. The storage cost is minimal compared to the recovery cost.
+
+**Multi-region standby** — deploy a warm standby kitchen in a second region. Traffic failover drops from minutes to seconds.
+
+**Chaos cooking** — run `npx pasta chaos:drill` quarterly. Kill a random node in your staging environment and practice the runbook. The drill that feels unnecessary now is the muscle memory that saves you at 3 AM.
+
+```yaml
+# .ricetta — example disaster-resilience configuration
+kitchen:
+  name: primary-kitchen-eu-central
+  backup:
+    enabled: true
+    interval: 5m
+    retention: 48h
+    storage: s3://mia-cucina-backups/primary/
+  standby:
+    enabled: true
+    region: eu-west
+    kitchen: standby-kitchen-eu-west
+  chaos:
+    drill_schedule: "0 10 * * MON"  # Monday mornings, not Friday afternoons
+```
+
+*Ricordatevi: 'o meglio cuoco non è quello che non sbaglia mai — è quello che sa come rimettere 'a pasta sul fuoco.*
+(Remember: the best cook is not the one who never makes mistakes — it is the one who knows how to put the pasta back on the fire.)

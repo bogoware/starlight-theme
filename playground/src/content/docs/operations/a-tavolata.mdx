@@ -1,0 +1,201 @@
+---
+title: "A Tavolata"
+description: "Scalare Pasta Protocol: aggiungere sedie al tavolo o comprare un tavolo più grande"
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import FeatureCard from '@bogoware/starlight-theme/components/FeatureCard.astro';
+import FeatureGrid from '@bogoware/starlight-theme/components/FeatureGrid.astro';
+
+> *"'A tavolata bella non è quella col tavolo più grande — è quella con le persone giuste."*
+> (A beautiful table setting is not the one with the biggest table — it is the one with the right people.)
+
+In Napoli, *a tavolata* is the communal table — the long, joyful gathering where everyone eats together. As your distributed system grows, your Pasta Protocol kitchen faces the same question every Neapolitan grandmother faces before Sunday lunch: do you add more chairs, or do you buy a bigger table? Both strategies are valid. Both have limits. Neither forgives bad planning.
+
+## Due Filosofie di Scala
+
+<FeatureGrid columns={2}>
+  <FeatureCard
+    title="Aggiungi sedie al tavolo"
+    description="Horizontal scaling: add more kitchen nodes to the cluster. Distribute the load across many small machines. More cooks, same kitchen size — each handles a portion of the work. Best for stateless workloads and read-heavy clusters."
+    icon="↔"
+  />
+  <FeatureCard
+    title="Compra un tavolo più grande"
+    description="Vertical scaling: give your existing nodes more CPU, memory, and I/O. One powerful machine handles more work per cycle. Best for consensus-heavy workloads and latency-sensitive sagas where inter-node coordination is the bottleneck."
+    icon="↑"
+  />
+</FeatureGrid>
+
+Neither approach is universally superior. Most production Pasta Protocol deployments use both: a baseline of well-sized nodes (vertical) with the ability to add nodes horizontally during peak demand. The rest of this page explains how to do each.
+
+## Scalabilità Orizzontale — Più Sedie
+
+Horizontal scaling in Pasta Protocol means adding new nodes to the cluster. The `Pesto Consensus` algorithm supports dynamic membership: you can add a node without restarting the cluster or interrupting service.
+
+### Aggiungere un Nodo
+
+```bash
+# 1. Start the new node process (it will be in JOINING state)
+npx pasta node:start \
+  --name napoli-04 \
+  --kitchen primary-kitchen-eu-central \
+  --join-via napoli-01:7000
+
+# 2. Wait for the node to catch up on the WAL replay
+npx pasta node:await-ready --name napoli-04 --timeout 120s
+# => napoli-04: WAL replay complete (12,441 operations)
+# => napoli-04: status FOLLOWER — ready
+
+# 3. Confirm cluster membership
+npx pasta cluster:status
+# => Nodes: 4/4 healthy | Leader: napoli-01 | Quorum: YES
+```
+
+Once the node is `FOLLOWER`-ready, the `KitchenManager` automatically routes a share of GarlicBreadcast consumer work and read requests to it. No configuration change required — the cluster self-balances.
+
+### Configurazione per Cluster Multi-Nodo
+
+```yaml
+# .ricetta — horizontal scaling configuration
+kitchen:
+  name: primary-kitchen-eu-central
+  nodes:
+    - host: napoli-01.internal
+      port: 7000
+      role: auto  # auto = leader-eligible
+    - host: napoli-02.internal
+      port: 7000
+      role: auto
+    - host: napoli-03.internal
+      port: 7000
+      role: auto
+    - host: napoli-04.internal
+      port: 7000
+      role: auto
+
+  scaling:
+    auto_balance: true           # rebalance GarlicBreadcast partitions on membership change
+    min_nodes: 3                 # never shrink below this — quorum requires it
+    replication_factor: 3        # how many nodes hold a copy of each Dispensa shard
+```
+
+### Partizioni GarlicBreadcast
+
+When you add nodes, GarlicBreadcast partitions are rebalanced automatically. During rebalancing, message delivery is uninterrupted but partition assignment is temporarily in flux — consumers may receive messages from both old and new partition assignments. Ensure your consumers are idempotent:
+
+```ts
+import { GarlicBreadcast } from '@pasta-protocol/core';
+
+const bus = GarlicBreadcast.getInstance();
+
+// Idempotent consumer: safe to call multiple times with the same message
+bus.subscribe('ordini', async (message) => {
+  const alreadyProcessed = await ordineRepository.exists(message.id);
+  if (alreadyProcessed) return; // idempotency guard
+
+  await ordineRepository.create(message.payload);
+});
+```
+
+## Scalabilità Verticale — Tavolo Più Grande
+
+Vertical scaling means increasing the resources available to each existing node. In containerised deployments this is a matter of updating your resource requests; on bare metal it means migrating to more powerful hardware.
+
+### Risorse Consigliate per Nodo
+
+| Carico di Lavoro | CPU | Memoria | Storage (Dispensa) | Note |
+|------------------|-----|---------|-------------------|------|
+| Development | 1 core | 512 MB | 1 GB | Single node, no HA |
+| Small production | 2 cores | 2 GB | 20 GB | 3-node cluster |
+| Medium production | 4 cores | 8 GB | 100 GB | 3–5 nodes |
+| Large production | 8 cores | 16 GB | 500 GB | 5+ nodes with dedicated leader |
+| Saga-heavy | 8+ cores | 32 GB | 200 GB | Long-running sagas are memory-intensive |
+| Analytics-heavy | 4 cores | 16 GB | 1+ TB | Large Dispensa with cold storage tier |
+
+### Configurazione JVM-style Tuning
+
+Pasta Protocol exposes several runtime tuning parameters that unlock additional throughput on larger machines:
+
+```yaml
+# .ricetta — vertical scaling tuning
+runtime:
+  max_heap_mb: 12288              # match to ~75% of available memory
+  gc_strategy: generational       # options: generational, incremental, manual
+  consensus_thread_pool: 8        # threads for Pesto Consensus; set to CPU count
+  bus_consumer_threads: 16        # GarlicBreadcast consumer thread pool
+  dispensa_io_threads: 8          # Dispensa I/O thread pool
+  saga_parallelism: 32            # max concurrent in-flight sagas
+
+performance:
+  enable_write_batching: true     # batch small writes — major throughput gain
+  batch_window_ms: 5              # wait up to 5ms to batch writes
+  enable_read_cache: true
+  read_cache_size_mb: 2048        # in-memory read cache; set to ~20% of heap
+```
+
+## Limiti di Scala e Confini del Tavolo
+
+<Aside type="caution">
+**I limiti della tavolata.**
+
+Horizontal scaling is not infinitely linear. Pasta Protocol uses `Pesto Consensus`, a variant of the Raft consensus algorithm. As cluster size grows, leader election latency and heartbeat overhead increase. Benchmarks show:
+
+- **3 nodes**: optimal for most workloads. Fast elections, minimal coordination overhead.
+- **5 nodes**: recommended for high-availability production. One extra fault-tolerance margin.
+- **7 nodes**: maximum recommended for write-heavy clusters. Beyond this, consensus round-trip time begins to impact P99 write latency significantly.
+- **9+ nodes**: supported but only recommended for read-heavy workloads where reads can be served from followers without consensus. Use `readConsistency: eventual` in your `.ricetta` to unlock this mode.
+
+Vertical scaling has a different limit: once a single node handles the entire leader write path, a single machine's CPU becomes the ceiling for write throughput. If your `pasta_kitchen_temperature_celsius` P99 is climbing despite generous CPU allocation, you have hit this ceiling. The answer is write sharding — split your kitchen into multiple independent clusters, each responsible for a subset of your keyspace.
+</Aside>
+
+## Auto-Scaling con Kubernetes
+
+For Kubernetes deployments, Pasta Protocol ships a `HorizontalPodAutoscaler` manifest that scales based on `pasta_kitchen_temperature_celsius` and queue depth:
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: pasta-kitchen-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: pasta-kitchen
+  minReplicas: 3
+  maxReplicas: 9
+  metrics:
+    - type: External
+      external:
+        metric:
+          name: pasta_kitchen_temperature_celsius
+          selector:
+            matchLabels:
+              quantile: "0.99"
+        target:
+          type: AverageValue
+          averageValue: "800m"   # scale up if P99 > 800ms
+    - type: External
+      external:
+        metric:
+          name: pasta_garlicbreadcast_queue_depth
+        target:
+          type: AverageValue
+          averageValue: "500"    # scale up if avg queue depth > 500 messages
+```
+
+Note that because Pasta Protocol uses stateful consensus, Kubernetes scaling events trigger a controlled join/leave procedure — not a simple pod restart. The `pasta-protocol-k8s` Helm chart handles this automatically via lifecycle hooks.
+
+## Strategia di Scala Consigliata
+
+For teams growing their Pasta Protocol deployment, the recommended evolution path is:
+
+1. **Start with 3 nodes, well-sized** — resist the urge to scale horizontally before you have understood your workload profile.
+2. **Monitor `pasta_kitchen_temperature_celsius`** — if P99 latency climbs under load, profile before scaling.
+3. **Scale vertically first** — adding memory and CPU to existing nodes has no coordination cost.
+4. **Add nodes when vertical ceiling is reached** — go from 3 to 5 nodes, not from 3 to 9.
+5. **Introduce write sharding only when 5-node vertical headroom is exhausted** — it adds operational complexity; do not reach for it prematurely.
+
+*'A tavolata cresce quando ce vò — ma ogni sedia nova porta 'o so peso.*
+(The table grows when it must — but every new chair brings its own weight.)
