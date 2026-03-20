@@ -1,42 +1,253 @@
 ---
-title: 'Pasta Protocol'
-description: 'Al dente consistency for your distributed systems'
+title: Pasta Protocol
+description: Al dente consistency for your distributed systems
 template: splash
 hero:
-  tagline: "'A pasta nun aspetta a nisciuno."
+  title: Pasta Protocol
+  tagline: Al dente consistency for your distributed systems
+  image:
+    html: |
+      <div style="position:relative;width:280px;height:280px;display:flex;align-items:center;justify-content:center;">
+        <div class="hero-glow"></div>
+        <img src="/starlight-theme/logo-favicon.svg" alt="Pasta Protocol" style="width:180px;height:180px;position:relative;z-index:2;filter:drop-shadow(0 0 40px rgba(99,102,241,0.4)) drop-shadow(0 0 80px rgba(139,92,246,0.2));" />
+        <div class="hero-ring hero-ring-1"></div>
+        <div class="hero-ring hero-ring-2"></div>
+        <div class="hero-ring hero-ring-3"></div>
+        <div class="hero-particle hero-particle-1"></div>
+        <div class="hero-particle hero-particle-2"></div>
+        <div class="hero-particle hero-particle-3"></div>
+        <div class="hero-particle hero-particle-4"></div>
+        <div class="hero-particle hero-particle-5"></div>
+      </div>
   actions:
     - text: Prima Cottura
       link: /starlight-theme/getting-started/installazione/
       icon: right-arrow
     - text: "'O Menu"
       link: /starlight-theme/api/panoramica/
-      variant: secondary
+      variant: minimal
 ---
 
+import { Card, CardGrid, LinkCard, Steps } from '@astrojs/starlight/components';
 import FeatureCard from '@bogoware/starlight-theme/components/FeatureCard.astro';
 import FeatureGrid from '@bogoware/starlight-theme/components/FeatureGrid.astro';
 
-Pasta Protocol is a distributed systems framework built on the timeless principles of Italian cooking. Where other frameworks promise eventual consistency, we promise **al dente consistency** — firm enough to hold its shape under load, never mushy, never raw.
+<style>{`
+  /* Quantum glow behind the logo */
+  .hero-glow {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99,102,241,0.3) 0%, rgba(139,92,246,0.15) 40%, transparent 70%);
+    animation: glow-pulse 4s ease-in-out infinite;
+    z-index: 1;
+  }
 
-<FeatureGrid columns={4}>
-  <FeatureCard
-    title="Pesto Consensus"
-    description="Distributed agreement, Ligurian-fast. Byzantine-fault tolerant as long as 2/3 of kitchens agree on the basil."
-    href="/starlight-theme/api/protocolli/"
-  />
-  <FeatureCard
-    title="Ragu Napoletano"
-    description="Long-running orchestration. Like nonna's ragu: 6 hours minimum, no shortcuts, and it only gets better with time."
-    href="/starlight-theme/architecture/o-ragu/"
-  />
-  <FeatureCard
-    title="GarlicBreadcast"
-    description="Pub/sub messaging that spreads to every node. Vampires (and stale caches) beware."
-    href="/starlight-theme/api/garlicbreadcast/"
-  />
-  <FeatureCard
-    title="Ravioli Encapsulation"
-    description="Clean boundaries. Each raviolo contains its own filling. No leaky abstractions, no soggy bottoms."
-    href="/starlight-theme/patterns/rigatoni/"
-  />
-</FeatureGrid>
+  /* Orbiting rings — Bogoliubov vertex / quantum field effect */
+  .hero-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid;
+    animation: ring-spin linear infinite;
+    z-index: 1;
+  }
+  .hero-ring-1 {
+    width: 220px; height: 220px;
+    border-color: rgba(99,102,241,0.25);
+    animation-duration: 12s;
+    transform: rotateX(60deg) rotateZ(0deg);
+  }
+  .hero-ring-2 {
+    width: 250px; height: 250px;
+    border-color: rgba(139,92,246,0.2);
+    animation-duration: 18s;
+    animation-direction: reverse;
+    transform: rotateX(70deg) rotateZ(45deg);
+  }
+  .hero-ring-3 {
+    width: 270px; height: 270px;
+    border-color: rgba(153,240,255,0.15);
+    animation-duration: 24s;
+    transform: rotateX(55deg) rotateZ(90deg);
+  }
+
+  /* Floating particles — quantum field excitations */
+  .hero-particle {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--bw-indigo, #6366f1);
+    z-index: 3;
+    animation: particle-float linear infinite;
+    opacity: 0;
+  }
+  .hero-particle-1 {
+    animation-duration: 6s; animation-delay: 0s;
+    --float-x: -80px; --float-y: -60px;
+  }
+  .hero-particle-2 {
+    animation-duration: 8s; animation-delay: 1.5s;
+    --float-x: 70px; --float-y: -90px;
+    background: var(--bw-violet, #8b5cf6);
+  }
+  .hero-particle-3 {
+    animation-duration: 7s; animation-delay: 3s;
+    --float-x: -60px; --float-y: 80px;
+    background: var(--bw-cyan, #99f0ff);
+  }
+  .hero-particle-4 {
+    animation-duration: 9s; animation-delay: 0.8s;
+    --float-x: 90px; --float-y: 50px;
+    background: var(--bw-periwinkle, #b0a0ff);
+  }
+  .hero-particle-5 {
+    animation-duration: 5s; animation-delay: 2.2s;
+    --float-x: -40px; --float-y: -100px;
+    width: 2px; height: 2px;
+  }
+
+  @keyframes glow-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.15); opacity: 1; }
+  }
+
+  @keyframes ring-spin {
+    from { transform: rotateX(60deg) rotateZ(0deg); }
+    to { transform: rotateX(60deg) rotateZ(360deg); }
+  }
+
+  @keyframes particle-float {
+    0% { transform: translate(0, 0) scale(0); opacity: 0; }
+    15% { opacity: 0.8; transform: translate(calc(var(--float-x) * 0.3), calc(var(--float-y) * 0.3)) scale(1); }
+    85% { opacity: 0.6; }
+    100% { transform: translate(var(--float-x), var(--float-y)) scale(0); opacity: 0; }
+  }
+
+  /* Reduce motion for accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-glow, .hero-ring, .hero-particle {
+      animation: none !important;
+    }
+    .hero-ring { opacity: 0.3; }
+    .hero-particle { opacity: 0; }
+  }
+`}</style>
+
+<p class="sl-text-lg" style="text-align:center;max-width:640px;margin:0 auto 0.5rem;">
+<em>"'A pasta nun aspetta a nisciuno."</em> — The pasta waits for no one. Neither does your distributed system. Build it right, build it al dente, build it with the wisdom of generations of Neapolitan cooks.
+</p>
+
+<p style="text-align:center;margin-bottom:2rem;">
+<span style="display:inline-flex;gap:0.5rem;flex-wrap:wrap;justify-content:center;">
+<img src="https://img.shields.io/badge/version-3.14.159-6366f1?style=flat-square" alt="Version" />
+<img src="https://img.shields.io/badge/consensus-Pesto_v2-8b5cf6?style=flat-square" alt="Consensus" />
+<img src="https://img.shields.io/badge/certified-DOC-22c55e?style=flat-square" alt="DOC Certified" />
+<img src="https://img.shields.io/badge/ananas-MAI_🚫-ef4444?style=flat-square" alt="No Pineapple" />
+</span>
+</p>
+
+## Perche Pasta Protocol?
+
+String-based message passing is fragile. You pick topic names by convention, match payloads by position, and maintain separate schemas that drift out of sync with every refactor.
+
+**Pasta Protocol takes a different approach.** Every data type is a pasta shape — its structure defines its behaviour. Rigatoni for pipelines, ravioli for encapsulation, lasagna for layers. The shape of your data determines the shape of your system. Rename a field and the compiler catches it. No conventions to memorize, no schemas to keep aligned by hand.
+
+The framework handles the rest: Byzantine-fault-tolerant consensus, pub/sub messaging, saga orchestration, and three-tier storage — all with the flavour of Napoli.
+
+## Core Features
+
+<CardGrid>
+  <Card title="Pesto Consensus" icon="approve-check">
+    Distributed agreement, Ligurian-fast. Byzantine-fault tolerant as long as 2/3 of kitchens agree on the basil. Sub-millisecond on local clusters.
+  </Card>
+  <Card title="Ragu Napoletano" icon="clock">
+    Long-running saga orchestration. Like nonna's ragu: 6 hours minimum, no shortcuts, and it only gets better with time. Full compensating transaction support.
+  </Card>
+  <Card title="GarlicBreadcast" icon="rocket">
+    Pub/sub messaging that spreads to every node. Topic wildcards, typed generics, backpressure support. Vampires (and stale caches) beware.
+  </Card>
+  <Card title="Ravioli Encapsulation" icon="puzzle">
+    Clean module boundaries. Each raviolo contains its own filling. No leaky abstractions, no soggy bottoms. Compile-time interface enforcement.
+  </Card>
+  <Card title="Mozzarella Cache" icon="star">
+    In-memory caching with three-tier fallback: hot (tavolo), warm (Redis), cold (PostgreSQL). Consistency guaranteed al dente.
+  </Card>
+  <Card title="Termometro" icon="bars">
+    Health monitoring with `/sono-vivo` endpoints. Prometheus metrics, Grafana dashboards, and four-level severity from BRUSCHETTA to TERREMOTO.
+  </Card>
+  <Card title="DOC Certification" icon="document">
+    Built-in quality gates for your architecture. Patterns are certified DOC, DOCG, or IGT — just like Italian wines. `pasta certifica` validates your kitchen.
+  </Card>
+  <Card title="Florentine Typography" icon="pen">
+    Two typography modes: Architect (Space Grotesk) for technical docs, Florentine (Cormorant Garamond) for literary content. Both coexist on the same site.
+  </Card>
+</CardGrid>
+
+## Quick Start
+
+<Steps>
+
+1. **Install the package**
+
+   ```bash
+   pnpm add pasta-protocol
+   ```
+
+2. **Write a `.ricetta` config**
+
+   ```yaml title="kitchen.ricetta"
+   kitchen:
+     name: "Casa Napoli"
+     nodes: 3
+     consensus: pesto
+     cottura_timeout: 30s
+   ```
+
+3. **Create your first kitchen**
+
+   ```ts title="main.ts" {4-5}
+   import { Kitchen } from 'pasta-protocol';
+
+   const kitchen = await Kitchen.create('./kitchen.ricetta');
+   kitchen.on('ready', () => console.log('La cucina e aperta!'));
+   await kitchen.start();
+   ```
+
+4. **Publish your first message**
+
+   ```ts title="publish.ts"
+   import { GarlicBreadcast } from 'pasta-protocol';
+
+   const bus = kitchen.breadcast;
+   await bus.publish('orders.pizza', {
+     type: 'margherita',
+     size: 'napoletana',
+   });
+   // Every subscriber in the cluster receives it — garlic spreads everywhere.
+   ```
+
+</Steps>
+
+## Architecture at a Glance
+
+| Component | Purpose | Key Metaphor |
+|-----------|---------|-------------|
+| `Kitchen` | Cluster orchestrator | The restaurant kitchen — coordinates everything |
+| `Forno` | Individual node | Each oven — independently heated, centrally managed |
+| `GarlicBreadcast` | Pub/sub messaging | Garlic bread — spreads to everyone at the table |
+| `Pesto` / `Genovese` / `Ragu` | Consensus protocols | Recipes — each with different cooking times and guarantees |
+| `Dispensa` | Storage layer | The pantry — hot, warm, and cold storage tiers |
+| `Termometro` | Health & monitoring | Kitchen thermometer — always know your temperature |
+
+## Explore
+
+<CardGrid>
+  <LinkCard title="Installazione" description="Package setup, system requirements, and first steps" href="/starlight-theme/getting-started/installazione/" />
+  <LinkCard title="La Cucina — Architecture" description="How the kitchen is organized: nodes, storage, networking, and sagas" href="/starlight-theme/architecture/panoramica/" />
+  <LinkCard title="'O Menu — API Reference" description="Complete type reference, consensus protocols, and configuration" href="/starlight-theme/api/panoramica/" />
+  <LinkCard title="Ricettario — Patterns" description="Certified architectural patterns: Rigatoni, Lasagna, Fusilli, and the dreaded Spaghetti" href="/starlight-theme/patterns/rigatoni/" />
+  <LinkCard title="'O Blog 'e Giovanni" description="Neapolitan traditions and recipes by Giovanni 'O Cuoco — in Florentine typography" href="/starlight-theme/blog/chi-sono/" />
+  <LinkCard title="La Filosofia" description="Design principles from the Neapolitan kitchen — seven koans for distributed systems" href="/starlight-theme/philosophy/a-via-napoletana/" />
+</CardGrid>
