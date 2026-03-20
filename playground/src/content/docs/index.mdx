@@ -1,0 +1,42 @@
+---
+title: 'Pasta Protocol'
+description: 'Al dente consistency for your distributed systems'
+template: splash
+hero:
+  tagline: "'A pasta nun aspetta a nisciuno."
+  actions:
+    - text: Prima Cottura
+      link: /starlight-theme/getting-started/installazione/
+      icon: right-arrow
+    - text: "'O Menu"
+      link: /starlight-theme/api/panoramica/
+      variant: secondary
+---
+
+import FeatureCard from '@bogoware/starlight-theme/components/FeatureCard.astro';
+import FeatureGrid from '@bogoware/starlight-theme/components/FeatureGrid.astro';
+
+Pasta Protocol is a distributed systems framework built on the timeless principles of Italian cooking. Where other frameworks promise eventual consistency, we promise **al dente consistency** — firm enough to hold its shape under load, never mushy, never raw.
+
+<FeatureGrid columns={4}>
+  <FeatureCard
+    title="Pesto Consensus"
+    description="Distributed agreement, Ligurian-fast. Byzantine-fault tolerant as long as 2/3 of kitchens agree on the basil."
+    href="/starlight-theme/api/protocolli/"
+  />
+  <FeatureCard
+    title="Ragu Napoletano"
+    description="Long-running orchestration. Like nonna's ragu: 6 hours minimum, no shortcuts, and it only gets better with time."
+    href="/starlight-theme/architecture/o-ragu/"
+  />
+  <FeatureCard
+    title="GarlicBreadcast"
+    description="Pub/sub messaging that spreads to every node. Vampires (and stale caches) beware."
+    href="/starlight-theme/api/garlicbreadcast/"
+  />
+  <FeatureCard
+    title="Ravioli Encapsulation"
+    description="Clean boundaries. Each raviolo contains its own filling. No leaky abstractions, no soggy bottoms."
+    href="/starlight-theme/patterns/rigatoni/"
+  />
+</FeatureGrid>

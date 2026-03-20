@@ -1,0 +1,96 @@
+/* Florentine typography override for blog pages.
+   Scoped via .florentine wrapper in MDX — only affects content area.
+   Chrome (header, sidebar, footer) stays in Architect mode.
+   Future: theme will support per-page mode switching natively. */
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('@bogoware/starlight-theme/assets/fonts/CormorantGaramond-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('@bogoware/starlight-theme/assets/fonts/CormorantGaramond-Bold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@bogoware/starlight-theme/assets/fonts/CrimsonPro-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Crimson Pro';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@bogoware/starlight-theme/assets/fonts/CrimsonPro-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Fira Code';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('@bogoware/starlight-theme/assets/fonts/FiraCode-Regular.woff2') format('woff2');
+}
+
+.florentine .sl-markdown-content {
+  font-family: 'Crimson Pro', 'Georgia', serif;
+  line-height: 1.75;
+}
+
+.florentine .sl-markdown-content h1,
+.florentine .sl-markdown-content h2,
+.florentine .sl-markdown-content h3,
+.florentine .sl-markdown-content h4 {
+  font-family: 'Cormorant Garamond', 'Georgia', serif;
+}
+
+.florentine .sl-markdown-content h1 {
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.florentine .sl-markdown-content h2 {
+  font-weight: 700;
+  font-size: 1.875rem;
+  line-height: 1.25;
+}
+
+.florentine .sl-markdown-content h3 {
+  font-weight: 600;
+  font-size: 1.5rem;
+  line-height: 1.25;
+}
+
+.florentine .sl-markdown-content blockquote {
+  font-style: italic;
+}
+
+.florentine .sl-markdown-content .pull-quote {
+  text-align: center;
+  font-size: 1.375rem;
+  font-style: italic;
+  line-height: 1.75;
+  margin: 2rem 0;
+  padding: 0 2rem;
+  border: none;
+  color: var(--bw-text-muted);
+}
+
+.florentine .sl-markdown-content code,
+.florentine .sl-markdown-content pre {
+  font-family: 'Fira Code', monospace;
+  font-variant-ligatures: contextual;
+}
