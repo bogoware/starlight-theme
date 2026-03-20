@@ -119,6 +119,20 @@
 }
 
 /* ============================================================
+ * Content layout — left-aligned against sidebar edge
+ * Starlight default centers content with auto margins, leaving
+ * an awkward gap between the sidebar and the text. Override to
+ * push content flush-left with a comfortable max-width.
+ * ============================================================ */
+.main-pane {
+  --sl-content-width: 50rem;
+}
+
+.content-panel {
+  margin-inline-start: 0;
+}
+
+/* ============================================================
  * Header social icons — larger, aligned with site title
  * ============================================================ */
 header .right-group .social-icons a {
