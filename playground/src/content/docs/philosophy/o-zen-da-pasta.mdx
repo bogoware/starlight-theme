@@ -1,0 +1,125 @@
+---
+title: "O Zen d'a Pasta"
+description: "Seven koans of distributed systems design, in the Neapolitan tradition"
+---
+
+import { LinkCard } from '@astrojs/starlight/components';
+
+> *"Chi ha pane nun tene diente, chi ha diente nun tene pane."*
+> (He who has bread has no teeth; he who has teeth has no bread.)
+> — On the cruelty of misalignment, and why we design interfaces carefully.
+
+In the old tradition, a Zen master does not lecture. He poses a question that carries the answer inside it, folded like filling inside a calzone. The student must work to unfold it. The seven principles below are offered in this spirit: not as rules to follow blindly, but as koans to sit with until the insight becomes yours.
+
+Pasta Protocol was not designed by committee. It was designed by cooks. And cooks think in principles, not in committee minutes.
+
+---
+
+## 1. La Pasta Dà Forma 'a Salsa — The Pasta Shapes the Sauce
+
+*"The pasta shapes the sauce, not the other way around."*
+
+An interface is a promise. It is the shape of the bowl that determines what the sauce can do — how it pools, where it clings, what it carries to the fork. When engineers design the implementation first and derive the interface afterward, they are pouring the sauce into a pot and then looking for a bowl that fits. The sauce controls them. They do not control the sauce.
+
+Define your interfaces before your implementations. Write the `.ricetta` contract before the `KitchenNode` that will honour it. Write the event schema before the subscriber that will consume it. Let the shape of the communication determine the shape of the logic, not the reverse. This is what interface-driven design means: the protocol is primary; everything else is secondary.
+
+The pasta does not apologise for its shape. Neither should your API.
+
+<LinkCard
+  title="Tipi di Pasta — Interface Types"
+  description="Reference for all Pasta Protocol interface shapes and their intended use cases."
+  href="/api/tipi-di-pasta"
+/>
+
+---
+
+## 2. 'A Pasta Fridda È Rroba 'e Povere — Never Serve Cold Pasta
+
+*"Never serve cold pasta."*
+
+A dish that has gone cold is no longer the dish it was intended to be. The texture has collapsed. The sauce has congealed. Serving it anyway is not economy — it is disrespect for the guest and for the craft. Throw it out and start again.
+
+In distributed systems, a request that has passed its deadline is cold pasta. Processing it wastes cluster resources, delays fresh requests, and delivers a result that nobody can use. Fail fast and fail explicitly. When a `KitchenNode` receives a message whose TTL has elapsed, it does not heroically attempt to process it — it discards it with a `BRUSCHETTA`-level log entry and moves on. When a circuit is open, it does not queue requests indefinitely in the hope that the downstream will recover — it rejects them cleanly so the caller can handle the failure on its own terms. Cold pasta is an error condition. Acknowledge it and move on.
+
+---
+
+## 3. 'A Pignata Guardata Nun Ferve Mmai — A Watched Pot Never Boils
+
+*"A watched pot never boils."*
+
+There is a reason the *nonna* does not stand over the ragù. She starts it, sets the heat, and goes about her morning. She trusts the process. She returns when the smell calls her. Blocking on a result that is not yet ready is not vigilance — it is waste.
+
+Pasta Protocol is asynchronous to its core. Nodes publish events and continue. Subscribers process at their own pace. The `GarlicBreadcast` bus does not block the publisher while it delivers to all subscribers. Synchronous request-response should be reserved for genuinely interactive operations; everything else should be fire and observe. Write your nodes to start a process and respond to its completion, rather than waiting for it to complete before doing anything else. The *nonna* is right. Go and do something useful.
+
+<LinkCard
+  title="GarlicBreadcast — Event Bus"
+  description="Asynchronous pub/sub system for distributing events across kitchen nodes."
+  href="/api/garlicbreadcast"
+/>
+
+---
+
+## 4. Troppi Cuoche Guastano 'a Menesta — Too Many Cooks Spoil the Broth
+
+*"Too many cooks spoil the broth."*
+
+Neapolitan broth — *il brodo* — is a precise thing. It has one cook. That cook owns the pot, the seasoning decisions, the timing. The moment a second cook begins adding ingredients "to help," the broth loses its coherence. It becomes a committee document.
+
+The Single Responsibility Principle is not a pedantic rule from a textbook. It is a cultural observation that every Neapolitan grandmother has made independently. Each `KitchenNode` should do one thing well. Each service should own one domain. When you find yourself writing a node that manages sessions *and* validates payments *and* sends notifications, you have too many cooks at the same pot. Extract them. Give each cook their own pot, their own heat, their own responsibility. The meal will be better for it.
+
+<LinkCard
+  title="A Rete — Network Architecture"
+  description="How to decompose a kitchen into single-responsibility nodes and connect them."
+  href="/architecture/a-rete"
+/>
+
+---
+
+## 5. L'Ingrediente Segreto È Sempre 'O Ammore — The Secret Ingredient Is Always Love
+
+*"The secret ingredient is always love."*
+
+Every Neapolitan cook says this, and every tourist thinks it is a charming deflection. It is not. It means: the differentiator is not the recipe, which everyone knows; it is the attention, the care, the willingness to taste, adjust, and tend. Two kitchens with identical ingredients produce different meals because one cook is present and one is going through the motions.
+
+In code, the secret ingredient is craftsmanship. It is the name that takes ten minutes to find instead of ten seconds. It is the comment that explains *why*, not just *what*. It is the function kept short enough to be comprehended whole. It is the test that documents intent. You can write distributed systems that work correctly but that nobody can maintain, extend, or reason about. Those systems are technically correct meals that nobody wants to eat. Write code as though the person who reads it next is someone you respect. They will be; it might be you.
+
+---
+
+## 6. Al Dente, Non al Muro — Just Right, Not Overcooked
+
+*"Al dente, not al muro."*
+
+*Al dente* means to the tooth — pasta cooked to the point where it yields with a pleasant resistance but is not raw at the centre. *Al muro* means to the wall — the test of a Neapolitan cook who never existed but is often cited: throw it at the wall; if it sticks, it is done. This is mythology. Pasta that sticks to walls is overcooked paste. It has surrendered all its structure in pursuit of being thoroughly done.
+
+Over-engineering is overcooked pasta. Every abstraction beyond what the problem requires is a minute of cooking time you cannot take back. Every framework adopted speculatively is a dependency you now own. Kubernetes for a two-node system. Event sourcing for a read-heavy dashboard. Plugin architectures for tools that will never need a third plugin. These are acts of culinary enthusiasm without discipline.
+
+Cook to *al dente*. Serve when the need is met. Do not wait for the perfect, fully-generalised solution before deploying — and do not keep cooking after the need is already satisfied.
+
+<LinkCard
+  title="O Ragu — Consensus & Long-Running Processes"
+  description="How Pasta Protocol handles long-running processes without over-engineering them."
+  href="/architecture/o-ragu"
+/>
+
+---
+
+## 7. Assaggia Mentre Cuoci — Taste as You Cook
+
+*"Taste as you cook."*
+
+A cook who tastes only at the end has no control. By the time she discovers the broth is undersalted or the sauce has reduced too far, it is too late to correct. The great cooks taste continuously — not because they distrust the recipe, but because cooking is a dynamic process and reality diverges from the plan.
+
+Write tests as you write code, not after. A test suite run only at the end of a sprint is a cook who tastes only at serving. By then, the cost of correction is maximum. When you write a test before the implementation — when you write the expectation before the reality — you taste the dish at its conception and guide it to what it should be. The `ROSSO → VERDE → REFACTOR` cycle is not a methodology invented by academics. It is what every good cook does, formalised.
+
+Taste your code as you cook it. Keep the feedback loop short. Trust the process.
+
+<LinkCard
+  title="O Termometro — Health & Observability"
+  description="Continuous health-checking so you always know the temperature of your kitchen."
+  href="/api/panoramica"
+/>
+
+---
+
+*Sette principi. Una cucina. Nun bastano 'e parole — bastano 'e fatte.*
+(Seven principles. One kitchen. Words are not enough — only actions are.)
