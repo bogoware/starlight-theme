@@ -1,0 +1,16 @@
+{
+  "name": "starlight-theme-playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.1",
+    "@astrojs/starlight": "^0.30.0",
+    "@bogoware/starlight-theme": "link:..",
+    "astro": "^5.17.0"
+  }
+}
