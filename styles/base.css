@@ -105,6 +105,20 @@
 }
 
 /* ============================================================
+ * Sidebar — active item with readable contrast
+ * Starlight default: solid accent bg + inverted text.
+ * Override: subtle tinted bg + accent-colored text.
+ * ============================================================ */
+[aria-current='page'],
+[aria-current='page']:hover,
+[aria-current='page']:focus {
+  color: var(--sl-color-accent) !important;
+  background-color: var(--sl-color-accent-low) !important;
+  border-inline-start: 3px solid var(--sl-color-accent);
+  padding-inline-start: calc(1rem - 3px);
+}
+
+/* ============================================================
  * Header social icons — larger, aligned with site title
  * ============================================================ */
 header .right-group .social-icons a {
