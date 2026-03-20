@@ -1,0 +1,144 @@
+---
+title: 'Certificazione DOC'
+description: "Pasta Protocol quality standards — earn your DOC, DOCG, or settle for IGT"
+---
+
+import { Badge, Card, CardGrid } from '@astrojs/starlight/components';
+
+> *"'A pasta buona si conosce d'a farina — 'o codice buono si conosce d'a struttura."*
+> (Good pasta is known by its flour — good code is known by its structure.)
+
+Every serious distributed system deserves certification. In Italy, the finest wines and foods carry a *Denominazione di Origine Controllata* — a guarantee of quality, origin, and adherence to defined standards. Pasta Protocol applies the same philosophy to software quality through its **Certificazione DOC** system.
+
+A Pasta Protocol kitchen earns a certification level based on measurable, auditable criteria. The `pasta certifica` CLI command evaluates your codebase and issues a certification report. There are three levels:
+
+---
+
+## <Badge text="IGT" variant="caution" /> Indicazione Geografica Tipica
+
+*"It's pasta. It's edible. We're not proud of it."*
+
+IGT is the baseline. Your service runs, deploys, and does not crash on the happy path. But it cuts corners: test coverage is below 60%, error handling is inconsistent, and there may be a few `any` types lurking in places they should not be. IGT systems are tolerated in development environments and never in production.
+
+<Card title="Checklist IGT">
+- [ ] Service starts without errors
+- [ ] At least one integration test exists
+- [ ] No unhandled promise rejections in normal operation
+- [ ] `pasta lint` produces fewer than 10 warnings
+- [ ] No hardcoded credentials in source files
+- [ ] `README.md` explains what the service does
+</Card>
+
+---
+
+## <Badge text="DOC" variant="note" /> Denominazione di Origine Controllata
+
+*"Certified. We'd serve this at a family dinner."*
+
+DOC certification means your kitchen meets the standard quality bar for Pasta Protocol services. Test coverage is at or above 80%, all public APIs are documented, error levels are applied consistently, and your Lasagna layers do not cross-contaminate. A DOC service can be reviewed by a new engineer in an afternoon.
+
+<CardGrid>
+  <Card title="Struttura e Architettura">
+    - [ ] Lasagna layers enforced — no cross-layer imports (`pasta lint --layers`)
+    - [ ] All public functions typed — zero `any` in exported signatures
+    - [ ] File sizes under 800 lines; functions under 50 lines
+    - [ ] No deep nesting (max 4 levels)
+    - [ ] Constants extracted — no magic strings or numbers
+  </Card>
+  <Card title="Test Coverage">
+    - [ ] Unit test coverage ≥ 80% (`pasta test --coverage`)
+    - [ ] All Rigatoni stages have isolated unit tests
+    - [ ] Integration tests cover every API endpoint
+    - [ ] At least one E2E test for each critical user flow
+    - [ ] No test uses `any` or disabled TypeScript checks
+  </Card>
+  <Card title="Gestione Errori">
+    - [ ] Every thrown error is a `PastaError` with a correct livello
+    - [ ] `BRUSCHETTA` used for soft anomalies, `TERREMOTO` only for true fatals
+    - [ ] All async operations have `.catch` or `try/catch`
+    - [ ] HTTP responses never expose internal error details
+    - [ ] `VESUVIO` events are logged with full context
+  </Card>
+  <Card title="Documentazione">
+    - [ ] Every exported symbol has a JSDoc comment
+    - [ ] `README.md` includes: purpose, prerequisites, install, run, test
+    - [ ] All `.ricetta` configuration keys are documented
+    - [ ] Architecture decision records (ADRs) exist for non-obvious choices
+    - [ ] `CHANGELOG.md` is maintained
+  </Card>
+</CardGrid>
+
+---
+
+## <Badge text="DOCG" variant="success" /> Denominazione di Origine Controllata e Garantita
+
+*"Guaranteed. We'd serve this to the Nonnas."*
+
+DOCG is the highest certification level. It extends DOC with guarantees around observability, security, performance, and operational excellence. A DOCG service is production-grade by definition. It can absorb a `TERREMOTO`-level failure, recover gracefully, and provide a full incident timeline from its event log.
+
+<CardGrid>
+  <Card title="Tutto il DOC, più…">
+    - [ ] All DOC checklist items pass
+    - [ ] `pasta certifica --level doc` exits with code 0
+    - [ ] No open CRITICAL or HIGH issues from `pasta security-scan`
+  </Card>
+  <Card title="Osservabilità">
+    - [ ] Structured JSON logging via `@pasta-protocol/logger`
+    - [ ] Distributed traces propagated on all inter-service calls
+    - [ ] `/sono-vivo` health endpoint returns detailed status
+    - [ ] Custom metrics exposed to Termometro aggregator
+    - [ ] Alert thresholds configured for VESUVIO-level events
+  </Card>
+  <Card title="Sicurezza">
+    - [ ] All inputs validated at system boundaries (Besciamella layer)
+    - [ ] No SQL string concatenation — parameterised queries only
+    - [ ] Secrets loaded from environment, never from source
+    - [ ] Dependencies audited (`pnpm audit` clean)
+    - [ ] Authentication enforced on all non-public routes
+    - [ ] Rate limiting configured on public-facing endpoints
+  </Card>
+  <Card title="Performance e Resilienza">
+    - [ ] All database queries have appropriate indexes verified
+    - [ ] FornoBatch concurrency tuned and documented
+    - [ ] Circuit breakers configured on all external calls
+    - [ ] Graceful shutdown implemented (drains in-flight requests)
+    - [ ] Load test run at 2× expected peak — no `VESUVIO` events
+  </Card>
+</CardGrid>
+
+---
+
+## Running the Certification Check
+
+```bash
+# Check your current certification level
+npx pasta certifica
+
+# Enforce a minimum level (fails build if not met)
+npx pasta certifica --level doc --fail-below
+
+# Generate a full certification report
+npx pasta certifica --level docg --report certification.json
+```
+
+Example output:
+
+```
+Pasta Protocol Certificazione v2.4.1
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Kitchen:    ordini-service
+Livello:    DOC ✓  (DOCG: 3 criteri mancanti)
+
+DOC  ████████████████████ 100%  PASSATO
+DOCG ████████████████░░░░  82%  3 criteri aperti
+
+DOCG mancanti:
+  [PEPERONCINO] Nessun circuit breaker su chiamate esterne (performance/resilienza)
+  [PEPERONCINO] /sono-vivo non espone metriche dettagliate (osservabilità)
+  [BRUSCHETTA]  CHANGELOG.md non aggiornato dall'ultimo rilascio (documentazione)
+
+Riepilogo: ordini-service è certificato DOC.
+Per la DOCG risolvere i 3 criteri PEPERONCINO sopra elencati.
+```
+
+A service that ships without at least DOC certification is, in the words of the Pasta Protocol specification, *"spaghetti that hasn't admitted what it is yet."* Certify your kitchen. The Nonnas are watching.

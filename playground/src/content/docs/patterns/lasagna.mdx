@@ -1,0 +1,139 @@
+---
+title: 'Lasagna Architecture'
+description: "Layered architecture in Pasta Protocol — every great structure is built stratum by stratum"
+---
+
+import FeatureGrid from '@bogoware/starlight-theme/components/FeatureGrid.astro';
+import FeatureCard from '@bogoware/starlight-theme/components/FeatureCard.astro';
+
+> *"'A lasagna bona tene 'e strate giuste — né troppe né pocche."*
+> (A good lasagna has the right layers — not too many, not too few.)
+
+Pasta Protocol's **Lasagna Architecture** is the framework's recommended approach to structuring large services. Just as a proper lasagna napoletana is built from distinct, interlocking strata — each with its own role, its own texture, its own flavour — a well-designed service separates concerns into discrete, non-leaking layers. Violate the boundary and you get a soggy bottom; respect it and you get something that holds its shape even when served to hundreds of concurrent diners.
+
+The architecture defines three canonical layers, each named after the corresponding component in a traditional lasagna:
+
+<FeatureGrid columns={3}>
+  <FeatureCard
+    title="Besciamella"
+    description="Presentation layer. Handles HTTP routing, request parsing, response serialisation, and authentication guards. Smooth, covering, and never the star of the dish on its own."
+  />
+  <FeatureCard
+    title="Ragù"
+    description="Business logic layer. Encodes domain rules, orchestrates use-case workflows, and enforces invariants. This is where the flavour lives — rich, slow-cooked, irreplaceable."
+  />
+  <FeatureCard
+    title="Pasta Sfoglia"
+    description="Data access layer. Abstracts repositories, query builders, and external API clients. Thin, resilient, and structured to carry the weight of everything above it."
+  />
+</FeatureGrid>
+
+## La Besciamella — Presentation Layer
+
+The Besciamella layer is your kitchen's front of house. It speaks HTTP (or gRPC, or WebSocket), validates the shape of incoming requests, maps them to use-case commands, and serialises domain results back into wire formats. It knows nothing about *why* an order is valid — only *whether* the request payload conforms to the expected shape.
+
+```typescript
+import { RigatoneRouter, type KitchenContext } from '@pasta-protocol/core';
+import { CreaOrdineCommand } from '../ragu/commands';
+import { OrdineResponseDto } from './dto';
+
+export const ordiniRouter = new RigatoneRouter('/ordini');
+
+ordiniRouter.post('/', async (ctx: KitchenContext) => {
+  // Besciamella: parse and validate input only
+  const body = await ctx.request.json();
+  const validated = CreaOrdineRequest.parse(body); // throws BRUSCHETTA on schema mismatch
+
+  // Hand off to Ragù — no business logic here
+  const result = await ctx.kitchen.dispatch(new CreaOrdineCommand(validated));
+
+  if (!result.ok) {
+    return ctx.response.error(result.error);
+  }
+
+  return ctx.response.created(OrdineResponseDto.from(result.value));
+});
+```
+
+The golden rule: if you find yourself writing an `if` about *domain logic* in the Besciamella, you have stirred the béchamel into the ragù. Separate them.
+
+## Il Ragù — Business Logic Layer
+
+The Ragù is the heart of your service. Commands arrive from the Besciamella, the Ragù applies domain rules, coordinates with repositories (through the Pasta Sfoglia abstraction), emits domain events, and returns results. It is strictly decoupled from both HTTP concerns and persistence details.
+
+```typescript
+import { type OrdineRepository } from '../pasta-sfoglia/repositories';
+import { OrdineConfermato } from './events';
+import { PastaError } from '@pasta-protocol/core';
+
+export class CreaOrdineUseCase {
+  constructor(private readonly ordini: OrdineRepository) {}
+
+  async esegui(command: CreaOrdineCommand): Promise<Result<Ordine>> {
+    const cliente = await this.ordini.trovaCLiente(command.clienteId);
+    if (!cliente) {
+      return Result.err(new PastaError('VESUVIO', 'CLIENTE_NON_TROVATO', command.clienteId));
+    }
+
+    if (cliente.creditoDisponibile < command.importo) {
+      return Result.err(new PastaError('PEPERONCINO', 'CREDITO_INSUFFICIENTE', {
+        disponibile: cliente.creditoDisponibile,
+        richiesto: command.importo,
+      }));
+    }
+
+    const ordine = Ordine.crea({
+      clienteId: command.clienteId,
+      importo: command.importo,
+      righe: command.righe,
+    });
+
+    await this.ordini.salva(ordine);
+    await this.ordini.pubblicaEvento(new OrdineConfermato(ordine));
+
+    return Result.ok(ordine);
+  }
+}
+```
+
+The Ragù never imports from `@pasta-protocol/http` or any adapter package. If it needs data, it calls a repository interface defined in its own layer.
+
+## La Pasta Sfoglia — Data Access Layer
+
+The Pasta Sfoglia is the thin, load-bearing sheet that separates everything above from the physical storage underneath. It implements the repository interfaces declared in the Ragù layer, handles connection pooling, query construction, and external API retries — without exposing any of those details upward.
+
+```typescript
+import { type OrdineRepository } from '../ragu/ports';
+import { DispennaAdapter } from '@pasta-protocol/dispensa';
+
+export class PostgresOrdineRepository implements OrdineRepository {
+  constructor(private readonly db: DispennaAdapter) {}
+
+  async trovaCLiente(id: string): Promise<Cliente | null> {
+    const row = await this.db.queryOne(
+      'SELECT * FROM clienti WHERE id = $1',
+      [id],
+    );
+    return row ? Cliente.fromRow(row) : null;
+  }
+
+  async salva(ordine: Ordine): Promise<void> {
+    await this.db.execute(
+      'INSERT INTO ordini (id, cliente_id, importo, stato) VALUES ($1, $2, $3, $4)',
+      [ordine.id, ordine.clienteId, ordine.importo, ordine.stato],
+    );
+  }
+
+  async pubblicaEvento(evento: DomainEvent): Promise<void> {
+    await this.db.publishOutbox(evento);
+  }
+}
+```
+
+In tests, swap the `PostgresOrdineRepository` for an `InMemoryOrdineRepository` — the Ragù never knows the difference, because it depends only on the interface.
+
+## Dependency Direction
+
+Dependencies flow strictly **downward**: Besciamella → Ragù → Pasta Sfoglia. The Ragù defines interfaces (ports) that the Pasta Sfoglia implements (adapters). This is the Ports and Adapters pattern applied Neapolitan-style: your domain is insulated from infrastructure the way a good pasta sfoglia insulates the filling from the baking dish.
+
+If you ever find yourself importing a Besciamella module from the Ragù, or a Ragù module from the Pasta Sfoglia, the `pasta lint` command will flag a `PEPERONCINO:LAYER_VIOLATION` and refuse to build. The oven will not heat for a badly assembled lasagna.

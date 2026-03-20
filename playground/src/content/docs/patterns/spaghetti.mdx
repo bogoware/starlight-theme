@@ -1,0 +1,118 @@
+---
+title: 'Spaghetti (Anti-Pattern)'
+description: "What not to do — the Spaghetti anti-pattern in Pasta Protocol"
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+> *"'O spaghetto è buono 'o piatto — dint'o codice è 'na disgrazia."*
+> (Spaghetti is excellent on a plate — in the code it's a disaster.)
+
+<Aside type="danger">
+**TERREMOTO — This is an anti-pattern.**
+
+Everything on this page describes what you must **not** do. Spaghetti is excellent on a plate. In your codebase, it is a `TERREMOTO`. Pasta Protocol will compile it, run it, and watch it collapse under the first change request — and then send you the bill.
+</Aside>
+
+We document the Spaghetti anti-pattern because it emerges naturally when developers are under pressure, skipping planning, or "just wiring things together quickly." Understanding what it looks like — and why it is catastrophic — is the first step toward never writing it again.
+
+## What is Spaghetti Code?
+
+Spaghetti code is code in which every module depends on every other module, responsibilities are tangled together, and following the execution path requires tracking a dozen different files simultaneously. Like a plate of spaghetti: tug one strand and every other strand moves. There are no clean ends. There are no seams. There is only the tangle.
+
+In distributed systems, Spaghetti is especially dangerous because the tangling spans not just files, but network boundaries, database transactions, and event handlers. A Spaghetti microservice is not a microservice — it is a distributed monolith with extra suffering.
+
+## Anatomy of a Spaghetti Disaster
+
+Here is a real-looking example of Spaghetti code in a Pasta Protocol kitchen. Read it carefully. Feel the horror.
+
+```typescript
+// ⚠️ DO NOT WRITE CODE LIKE THIS ⚠️
+// This handler does seventeen things. Name one of them.
+
+import { db } from '../../globals/database';         // global mutable singleton
+import { mailer } from '../../globals/mailer';        // another global
+import { stripe } from '../../globals/payments';      // and another
+import { logger } from '../../globals/logger';
+import { cache } from '../../globals/cache';
+
+export async function handleOrdine(req: any, res: any) {
+  // Parse, validate, query, charge, email, cache — all in one function
+  const body = JSON.parse(req.body);                  // no schema validation
+  const cliente = await db.query(`SELECT * FROM clienti WHERE id = '${body.clienteId}'`);
+  // ↑ SQL injection waiting to happen. TERREMOTO.
+
+  if (!cliente.rows[0]) {
+    res.status(404).send('not found');               // leaking DB structure to HTTP
+    return;
+  }
+
+  // Business logic tangled directly with HTTP handling
+  if (cliente.rows[0].credito < body.importo) {
+    mailer.send(cliente.rows[0].email, 'Credito insufficiente');  // side-effect inside validation
+    res.status(402).send('credito insufficiente');
+    return;
+  }
+
+  // Mutate a shared object instead of creating a new one
+  cliente.rows[0].credito -= body.importo;            // mutating a DB result object
+  await db.query(
+    `UPDATE clienti SET credito = ${cliente.rows[0].credito} WHERE id = '${body.clienteId}'`,
+  );
+  // ↑ SQL injection again. No transaction. If the next step fails, the credit is gone forever.
+
+  const chargeResult = await stripe.charge({
+    amount: body.importo,
+    customer: cliente.rows[0].stripeId,
+  });
+  // No error handling. If Stripe is down: TERREMOTO, unhandled rejection.
+
+  // Email notification inside the same transaction path
+  await mailer.send(cliente.rows[0].email, `Ordine confermato: ${chargeResult.id}`);
+
+  // Cache invalidation logic mixed with business logic
+  cache.del(`cliente:${body.clienteId}`);
+  cache.del(`ordini:${body.clienteId}`);
+
+  // Direct database ID exposed in the API response
+  res.status(200).json({ ordineId: chargeResult.id, clienteDbId: cliente.rows[0].id });
+  // ↑ Leaked internal structure. Every consumer is now coupled to your schema.
+}
+```
+
+Count the violations:
+
+1. **SQL injection** — twice. Unparameterized queries constructed with string interpolation.
+2. **No input validation** — `req.body` is cast with `JSON.parse` and used directly.
+3. **Mutation** — `cliente.rows[0].credito` is mutated in place.
+4. **No transaction** — credit is deducted before the charge. A Stripe failure leaves an inconsistent state.
+5. **Tangled concerns** — HTTP, business logic, payment, email, and cache in a single 40-line function.
+6. **Global mutable singletons** — impossible to test in isolation.
+7. **Unhandled promise rejection** — Stripe failure crashes the process.
+8. **Internal structure leakage** — database IDs in the HTTP response.
+9. **Side-effects inside validation** — email sent before the full validation is complete.
+10. **No error levels** — every failure is either a `404` or an unhandled crash.
+
+## Why It Feels Fast (And Why It Isn't)
+
+The first time you write code like this, it works. The feature ships in an afternoon. You feel productive. 'O capo è contento.
+
+Then the second feature arrives. You can't reuse the Stripe logic because it's fused to the mailer. You can't test the credit-check logic because it requires a live database. You can't change the database schema because three other functions do `cliente.rows[0].id`. Every change requires understanding the whole tangle before touching any single strand.
+
+After six months, every developer on the team is afraid to change anything. The codebase has become a distributed `TERREMOTO` in slow motion.
+
+## The Corrected Architecture
+
+Replace the spaghetti with a Lasagna (layered) architecture feeding into a Rigatoni pipeline:
+
+- **Besciamella layer**: parse the request, validate with a schema, dispatch a `CreaOrdineCommand`.
+- **Ragù layer**: apply domain rules (credit check), produce a `OrdineConvalidato` domain object.
+- **Pasta Sfoglia layer**: persist via a repository, charge via a `PagamentiPort`, enqueue email via a `NotifichePort`.
+
+Each piece is independently testable, independently deployable, and independently comprehensible. See [Lasagna Architecture](/starlight-theme/patterns/lasagna/) and [Rigatoni Pipeline](/starlight-theme/patterns/rigatoni/) for the correct approach.
+
+<Aside type="tip">
+**The First Warning Sign**
+
+If you are writing a function and you find yourself needing to import from more than three different modules that are not in the same layer, stop. You are building spaghetti. Step back, identify the correct layer for each concern, and distribute the logic accordingly. Your future self — and your colleagues — will thank you.
+</Aside>
